@@ -1,16 +1,17 @@
 # i'm new to this and it's a dev (hopefully) branch, have some mercy
 
-from pynput.keyboard import Key, KeyCode, Listener
+from pynput.keyboard import Key, KeyCode, Listener, Controller
 import pyperclip
 from time import sleep
 from ahk import AHK, Hotkey
 from ahk.window import Window
 import sample_items
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 ahk = AHK()
 clipboard = pyperclip.paste()
+keyboard = Controller()
 script = f'ToolTip, {clipboard}, 500, 500'
 hotkey = Hotkey(ahk, "^p", script)
 persistent = "#Persistent\n"
@@ -51,11 +52,24 @@ def clipboard_to_tooltip():
     display_item_in_tooltip(item)  # alternative, needs more work cleaning out illegal ahk chars
     print("---end---")
 
+def to_hideout():
+    pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
+    win = ahk.active_window.process
+    print(win)
+    if "PathOfExile" in win:
+        keyboard.press(Key.enter)
+        keyboard.release(Key.enter)
+        keyboard.type("/hideout")
+        keyboard.press(Key.enter)
+        keyboard.release(Key.enter)
+    sleep(1)  # lord forgive me for this temporary solution while i'm learning stuff
+
 # Create a mapping of keys to function (use frozenset as sets/lists are not hashable - so they can't be used as keys)
 # Note the missing `()` after quit_func and clipboard_to_tooltip as want to pass the function, not the return value of the function
 combination_to_function = {
-    frozenset([Key.shift, KeyCode(vk=81)]): quit_func,  # shift + q
+    frozenset([Key.ctrl_l, Key.shift, KeyCode(vk=81)]): quit_func,  # shift + q
     frozenset([Key.ctrl_l, KeyCode(vk=67)]): clipboard_to_tooltip,  # left ctrl + c
+    frozenset([KeyCode(vk=116)]): to_hideout,
 }
 
 # The currently pressed keys (initially empty)
@@ -83,9 +97,8 @@ def on_press(key):
 
 def on_release(key):
     """ When a key is released """
-    # for now it's instead handled in clipboard_to_tooltip()
-    # vk = get_vk(key)  # Get the key's vk
-    # pressed_vks.remove(vk)  # Remove it from the set of currently pressed keys
+    vk = get_vk(key)  # Get the key's vk
+    pressed_vks.remove(vk)  # Remove it from the set of currently pressed keys
     pass
 
 with Listener(on_press=on_press, on_release=on_release) as listener:
