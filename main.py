@@ -45,11 +45,14 @@ def clipboard_to_tooltip():
     # TODO: try removing just the 'c' key to see if i can make chaining tooltips possible with ctrl pressed down
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
     sleep(0.01)  # i think it prevents what's called a race condition? else old clipboard data gets copied
-    clipboard = pyperclip.paste()  # get clipboard text from clipboard
-    item = format_raw_item(clipboard)  # formats it
-    # raw clipboard to tooltip function, but doesn't require formatting to work
-    # ahk.run_script(f'ToolTip, {"".join(["%", "clipboard%"])}{sleepscr}')
-    display_item_in_tooltip(item)  # alternative, needs more work cleaning out illegal ahk chars
+    win = ahk.active_window.process
+    print(win)
+    if "PathOfExile" in win:
+        clipboard = pyperclip.paste()  # get clipboard text from clipboard
+        item = format_raw_item(clipboard)  # formats it
+        # raw clipboard to tooltip function, but doesn't require formatting to work
+        # ahk.run_script(f'ToolTip, {"".join(["%", "clipboard%"])}{sleepscr}')
+        display_item_in_tooltip(item)  # alternative, needs more work cleaning out illegal ahk chars
     print("---end---")
 
 def to_hideout():
@@ -62,7 +65,7 @@ def to_hideout():
         keyboard.type("/hideout")
         keyboard.press(Key.enter)
         keyboard.release(Key.enter)
-    sleep(1)  # lord forgive me for this temporary solution while i'm learning stuff
+        sleep(1)  # lord forgive me for this temporary solution while i'm learning stuff
 
 # Create a mapping of keys to function (use frozenset as sets/lists are not hashable - so they can't be used as keys)
 # Note the missing `()` after quit_func and clipboard_to_tooltip as want to pass the function, not the return value of the function
@@ -98,7 +101,8 @@ def on_press(key):
 def on_release(key):
     """ When a key is released """
     vk = get_vk(key)  # Get the key's vk
-    pressed_vks.remove(vk)  # Remove it from the set of currently pressed keys
+    if vk in pressed_vks:
+        pressed_vks.remove(vk)  # Remove it from the set of currently pressed keys
     pass
 
 with Listener(on_press=on_press, on_release=on_release) as listener:
