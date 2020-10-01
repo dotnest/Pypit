@@ -7,6 +7,7 @@ from ahk import AHK, Hotkey
 from ahk.window import Window
 import sample_items
 import logging
+import requests
 logging.basicConfig(level=logging.INFO)
 
 ahk = AHK()
@@ -67,12 +68,39 @@ def to_hideout():
         keyboard.release(Key.enter)
         sleep(1)  # lord forgive me for this temporary solution while i'm learning stuff
 
+def pricecheck():
+    pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
+    keyboard.press(Key.ctrl_l)
+    keyboard.press(KeyCode(vk=67))
+    keyboard.release(Key.ctrl_l)
+    keyboard.release(KeyCode(vk=67))
+    sleep(0.03)
+    item_info = pyperclip.paste().split("\r\n")
+    if "Currency" not in item_info[0]:
+        print("Selected item isn't currency, returning...")
+        return -1
+    print("Got", item_info[1])
+    item_info[0] = item_info[0].split()[1]
+    stack_size = int(item_info[3].split()[2].split("/")[0])
+    # win = ahk.active_window.process
+    # print(win)
+    # if "PathOfExile" in win:
+    r = requests.get("https://poe.ninja/api/data/currencyoverview?league=Heist&type=Currency&language=en")
+    r = r.json()
+    # print(r.content)
+    for line in r["lines"]:
+        if item_info[1] == line["currencyTypeName"]:
+            print("Hit", item_info[1])
+            print(f'{stack_size} {format(stack_size / float(line["pay"]["value"]), ".2f")}c')
+            break
+
 # Create a mapping of keys to function (use frozenset as sets/lists are not hashable - so they can't be used as keys)
 # Note the missing `()` after quit_func and clipboard_to_tooltip as want to pass the function, not the return value of the function
 combination_to_function = {
     frozenset([Key.ctrl_l, Key.shift, KeyCode(vk=81)]): quit_func,  # shift + q
-    frozenset([Key.ctrl_l, KeyCode(vk=67)]): clipboard_to_tooltip,  # left ctrl + c
-    frozenset([KeyCode(vk=116)]): to_hideout,
+    # frozenset([Key.ctrl_l, KeyCode(vk=67)]): clipboard_to_tooltip,  # left ctrl + c
+    frozenset([Key.ctrl_l, KeyCode(vk=68)]): pricecheck,  # left ctrl + d
+    frozenset([KeyCode(vk=116)]): to_hideout,  # F5
 }
 
 # The currently pressed keys (initially empty)
