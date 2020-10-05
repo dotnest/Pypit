@@ -9,6 +9,7 @@ import sample_items
 import logging
 import requests
 from datetime import datetime, timedelta
+import name_to_apiurl as ntu
 
 logging.basicConfig(level=logging.INFO)
 
@@ -90,35 +91,54 @@ def get_request(url):
     print("returning fresh enough response from dict")
     return requests_dict[url][1]
 
+
+def get_url_for_item(item):
+    url = None
+    for key, value in ntu.name_to_URL_dict.items():
+        if item in key:
+            url = value
+            break
+
+    if url:
+        print("choosing", url)
+        return url
+    else:
+        print("not found\n")
+        return -1
+
+
 def pricecheck():
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
-    # win = ahk.active_window.process
-    # print(win)
-    # if "PathOfExile" in win:
+    win = ahk.active_window.process
+    print(win)
+    if "PathOfExile" not in win:
+        print("PoE window isn't in focus, returning...")
+        return -1
     keyboard.press(Key.ctrl_l)
     keyboard.press(KeyCode(vk=67))
     keyboard.release(Key.ctrl_l)
     keyboard.release(KeyCode(vk=67))
     sleep(0.03)
     item_info = pyperclip.paste().split("\r\n")
-    if "Currency" not in item_info[0]:
-        print("Selected item isn't currency, returning...")
-        return -1
-    print("Got", item_info[1])
     item_info[0] = item_info[0].split()[1]
-    stack_size = int(item_info[3].split()[2].split("/")[0])
-    r = get_request(
-        "https://poe.ninja/api/data/currencyoverview?league=Heist&type=Currency&language=en"
-    )
+
+    if "Stack Size:" in item_info[3]:
+        stack_size = int(item_info[3].split()[2].split("/")[0])
+    else:
+        stack_size = 1
+
+    item_name = item_info[1]
+    print("Got", item_name)
+    url = get_url_for_item(item_name)
+    r = get_request(url)
     r = r.json()
-    # print(r.content)
     for line in r["lines"]:
         if item_info[1] == line["currencyTypeName"]:
             print("Hit", item_info[1])
-            print(
-                f'{stack_size} {format(stack_size / float(line["pay"]["value"]), ".2f")}c'
-            )
+            item_value = stack_size / float(line["pay"]["value"])
+            print(f'{stack_size} {format(item_value, ".2f")}c')
             break
+    print()
 
 
 # Create a mapping of keys to function (use frozenset as sets/lists are not hashable - so they can't be used as keys)
@@ -162,7 +182,6 @@ def on_release(key):
     vk = get_vk(key)  # Get the key's vk
     if vk in pressed_vks:
         pressed_vks.remove(vk)  # Remove it from the set of currently pressed keys
-    pass
 
 
 with Listener(on_press=on_press, on_release=on_release) as listener:
