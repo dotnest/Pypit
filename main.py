@@ -8,6 +8,7 @@ from ahk.window import Window
 import sample_items
 import logging
 import requests
+from datetime import datetime, timedelta
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,6 +19,7 @@ script = f"ToolTip, {clipboard}, 500, 500"
 hotkey = Hotkey(ahk, "^p", script)
 persistent = "#Persistent\n"
 sleepscr = "Sleep 1000"
+requests_dict = dict()
 
 
 def quit_func():
@@ -76,8 +78,23 @@ def to_hideout():
         sleep(1)  # lord forgive me for this temporary solution while i'm learning stuff
 
 
+def get_request(url):
+    if url not in requests_dict:
+        print("adding new entry in dict")
+        requests_dict[url] = (datetime.now(), requests.get(url))
+        return requests_dict[url][1]
+    if datetime.now() - requests_dict[url][0] > timedelta(minutes=5):
+        print("updating entry in dict")
+        requests_dict[url] = (datetime.now(), requests.get(url))
+        return requests_dict[url][1]
+    print("returning fresh enough response from dict")
+    return requests_dict[url][1]
+
 def pricecheck():
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
+    # win = ahk.active_window.process
+    # print(win)
+    # if "PathOfExile" in win:
     keyboard.press(Key.ctrl_l)
     keyboard.press(KeyCode(vk=67))
     keyboard.release(Key.ctrl_l)
@@ -90,10 +107,7 @@ def pricecheck():
     print("Got", item_info[1])
     item_info[0] = item_info[0].split()[1]
     stack_size = int(item_info[3].split()[2].split("/")[0])
-    # win = ahk.active_window.process
-    # print(win)
-    # if "PathOfExile" in win:
-    r = requests.get(
+    r = get_request(
         "https://poe.ninja/api/data/currencyoverview?league=Heist&type=Currency&language=en"
     )
     r = r.json()
