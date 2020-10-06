@@ -144,6 +144,13 @@ def pricecheck():
 
     item_name = item_info[1]
     print("Got", item_name)
+    if item_name == "Chaos Orb":
+        r = requests.get(ntu.name_to_URL_dict[ntu.currency]).json()
+        for line in r["lines"]:
+            if "Exalted Orb" in line["currencyTypeName"]:
+                item_value = float(line["receive"]["value"])
+        print(f"{stack_size} {format(stack_size / item_value, '.2f')}ex")
+        return -1
     url = get_url_for_item(item_name)
     r = get_request(url)
     r = r.json()
