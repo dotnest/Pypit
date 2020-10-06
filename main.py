@@ -27,6 +27,7 @@ def quit_func():
     """ Function for properly closing ahk hotkey listener and quitting this script """
     print("Executed quit_func")
     hotkey.stop()
+    listener.stop()
     quit()
 
 
@@ -107,6 +108,14 @@ def get_url_for_item(item):
         return -1
 
 
+def get_item_value(item_name, stack_size, line):
+    if item_name in ntu.currency or item_name in ntu.fragments:
+        value = stack_size / float(line["pay"]["value"])
+    elif item_name in ntu.delirium_orbs:
+        value = stack_size * line["chaosValue"]
+    return value
+
+
 def pricecheck():
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
     win = ahk.active_window.process
@@ -133,9 +142,9 @@ def pricecheck():
     r = get_request(url)
     r = r.json()
     for line in r["lines"]:
-        if item_info[1] == line["currencyTypeName"]:
+        if item_info[1] in line.values():
             print("Hit", item_info[1])
-            item_value = stack_size / float(line["pay"]["value"])
+            item_value = get_item_value(item_name, stack_size, line)
             print(f'{stack_size} {format(item_value, ".2f")}c')
             break
     print()
