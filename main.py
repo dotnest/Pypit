@@ -109,10 +109,16 @@ def get_url_for_item(item):
 
 
 def get_item_value(item_name, stack_size, line):
-    if item_name in ntu.currency or item_name in ntu.fragments:
+    for key, value in ntu.get_value_dict.items():
+        if item_name in value:
+            json_query = key
+            break
+    if json_query == "pay_value":
         value = stack_size / float(line["pay"]["value"])
-    elif item_name in ntu.delirium_orbs:
+    elif json_query == "chaosValue":
         value = stack_size * line["chaosValue"]
+    else:
+        raise AttributeError("no such item found")
     return value
 
 
