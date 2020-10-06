@@ -54,15 +54,12 @@ def clipboard_to_tooltip():
     print("Caught ctrl-c")
     # TODO: try removing just the 'c' key to see if i can make chaining tooltips possible with ctrl pressed down
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
-    # i think sleep prevents a race condition? else old clipboard data gets copied
-    sleep(0.01)
+    sleep(0.01)  # prevent copying old data
     win = ahk.active_window.process
     print(win)
     if "PathOfExile" in win:
         clipboard = pyperclip.paste()  # get clipboard text from clipboard
         item = format_raw_item(clipboard)  # formats it
-        # raw clipboard to tooltip function, but doesn't require formatting to work
-        # ahk.run_script(f'ToolTip, {"".join(["%", "clipboard%"])}{sleepscr}')
         display_item_in_tooltip(item)
     print("---end---")
 
@@ -70,7 +67,6 @@ def clipboard_to_tooltip():
 def to_hideout():
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
     win = ahk.active_window.process
-    print(win)
     if "PathOfExile" in win:
         keyboard.press(Key.enter)
         keyboard.release(Key.enter)
@@ -101,7 +97,6 @@ def get_url_for_item(item):
             break
 
     if url:
-        print("choosing", url)
         return url
     else:
         print("not found\n")
@@ -122,10 +117,10 @@ def get_item_value(item_name, stack_size, line):
     return value
 
 
+# TODO: add Item class with Item.corrupted, Item.links, etc.
 def pricecheck():
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
     win = ahk.active_window.process
-    print(win)
     if "PathOfExile" not in win:
         print("PoE window isn't in focus, returning...")
         return -1
@@ -167,7 +162,6 @@ def pricecheck():
 # Note the missing `()` after quit_func and clipboard_to_tooltip as want to pass the function, not the return value of the function
 combination_to_function = {
     frozenset([Key.ctrl_l, Key.shift, KeyCode(vk=81)]): quit_func,  # shift + q
-    # frozenset([Key.ctrl_l, KeyCode(vk=67)]): clipboard_to_tooltip,  # left ctrl + c
     frozenset([Key.ctrl_l, KeyCode(vk=68)]): pricecheck,  # left ctrl + d
     frozenset([KeyCode(vk=116)]): to_hideout,  # F5
 }
