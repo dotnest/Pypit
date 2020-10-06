@@ -341,8 +341,49 @@ scarabs = (
     "Polished Reliquary Scarab",
 )
 
+fossils = (
+    "Fractured Fossil",
+    "Faceted Fossil",
+    "Bloodstained Fossil",
+    "Bound Fossil",
+    "Sanctified Fossil",
+    "Corroded Fossil",
+    "Hollow Fossil",
+    "Shuddering Fossil",
+    "Glyphic Fossil",
+    "Perfect Fossil",
+    "Gilded Fossil",
+    "Enchanted Fossil",
+    "Aetheric Fossil",
+    "Jagged Fossil",
+    "Prismatic Fossil",
+    "Lucent Fossil",
+    "Serrated Fossil",
+    "Tangled Fossil",
+    "Dense Fossil",
+    "Aberrant Fossil",
+    "Pristine Fossil",
+    "Encrusted Fossil",
+    "Frigid Fossil",
+    "Scorched Fossil",
+    "Metallic Fossil",
+)
+
+resonators = (
+    "Prime Alchemical Resonator",
+    "Prime Chaotic Resonator",
+    "Powerful Chaotic Resonator",
+    "Potent Chaotic Resonator",
+    "Primitive Alchemical Resonator",
+    "Potent Alchemical Resonator",
+    "Powerful Alchemical Resonator",
+    "Primitive Chaotic Resonator",
+)
+
 get_value_dict = {
-    "chaosValue": (delirium_orbs + watchstones + oils + incubators + scarabs),
+    "chaosValue": (
+        delirium_orbs + watchstones + oils + incubators + scarabs + fossils + resonators
+    ),
     "pay_value": (currency + fragments),
 }
 
@@ -354,4 +395,6 @@ name_to_URL_dict = {
     oils: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Oil&language=en",
     incubators: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Incubator&language=en",
     scarabs: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Scarab&language=en",
+    fossils: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Fossil&language=en",
+    resonators: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Resonator&language=en",
 }
