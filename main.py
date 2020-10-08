@@ -1,5 +1,3 @@
-# i'm new to this and it's a dev (hopefully) branch, have some mercy
-
 from pynput.keyboard import Key, KeyCode, Listener, Controller
 import pyperclip
 from time import sleep, time
@@ -12,9 +10,8 @@ import window_name
 
 logging.basicConfig(level=logging.INFO)
 
-clipboard = pyperclip.paste()
 keyboard = Controller()
-requests_dict = dict()
+requests_cache_dict = dict()
 
 
 class Item:
@@ -23,7 +20,7 @@ class Item:
 
 
 def quit_func():
-    """ Function for properly closing ahk hotkey listener and quitting this script """
+    """ Function for properly quitting this script """
     print("Executed quit_func")
     listener.stop()
     quit()
@@ -67,16 +64,16 @@ def to_hideout():
 
 
 def get_request(url):
-    if url not in requests_dict:
+    if url not in requests_cache_dict:
         print("adding new entry in dict")
-        requests_dict[url] = (datetime.now(), requests.get(url))
-        return requests_dict[url][1]
-    if datetime.now() - requests_dict[url][0] > timedelta(minutes=5):
+        requests_cache_dict[url] = (datetime.now(), requests.get(url))
+        return requests_cache_dict[url][1]
+    if datetime.now() - requests_cache_dict[url][0] > timedelta(minutes=5):
         print("updating entry in dict")
-        requests_dict[url] = (datetime.now(), requests.get(url))
-        return requests_dict[url][1]
+        requests_cache_dict[url] = (datetime.now(), requests.get(url))
+        return requests_cache_dict[url][1]
     print("returning fresh enough response from dict")
-    return requests_dict[url][1]
+    return requests_cache_dict[url][1]
 
 
 def get_url_for_item(item):
@@ -109,18 +106,24 @@ def get_item_value(item_name, stack_size, line):
         return -1
 
 
-# TODO: add Item class with Item.corrupted, Item.links, etc.
-def pricecheck():
-    start_time = time()
-    pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
-    if not poe_in_focus():
-        print("PoE window isn't in focus, returning...")
-        return -1
+def press_ctrl_c():
     keyboard.press(Key.ctrl_l)
     keyboard.press(KeyCode(vk=67))
     keyboard.release(Key.ctrl_l)
     keyboard.release(KeyCode(vk=67))
     sleep(0.03)
+
+
+# TODO: add Item class with Item.corrupted, Item.links, etc.
+def pricecheck():
+    start_time = time()  # for checking pricecheck performance
+    pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
+    if not poe_in_focus():
+        print("PoE window isn't in focus, returning...\n")
+        return -1
+
+    # getting raw item info from the game and formatting its type/rarity
+    press_ctrl_c()
     item_info = pyperclip.paste().split("\r\n")
     item_info[0] = item_info[0].split()[1]
 
@@ -131,21 +134,27 @@ def pricecheck():
 
     item_name = item_info[1]
     print("Got", item_name)
+
+    # edge case for Chaos Orb
     if item_name == "Chaos Orb":
-        r = requests.get(ntu.name_to_URL_dict[ntu.currency]).json()
+        r = get_request(ntu.name_to_URL_dict[ntu.currency]).json()
         for line in r["lines"]:
             if "Exalted Orb" in line["currencyTypeName"]:
                 item_value = float(line["receive"]["value"])
                 print("Took", format(time() - start_time, ".3f"))
                 break
-        print(f"{stack_size} {format(stack_size / item_value, '.2f')}ex")
+        print(f"{stack_size} {format(stack_size / item_value, '.2f')}ex\n")
         return -1
+
+    # getting appropriate poe.ninja "page" api response
     url = get_url_for_item(item_name)
     if url == -1:
         print("unsupported item\n")
         return -1
     r = get_request(url)
     r = r.json()
+
+    # finding and displaying item value from api response
     for line in r["lines"]:
         if item_info[1] in line.values():
             print("Hit", item_info[1])
@@ -157,6 +166,11 @@ def pricecheck():
             print(f'{stack_size} {format(item_value, ".2f")}c')
             break
     print()
+
+
+# TODO: make a popup tkinter window with item and item value info
+# to make popup close on Esc key press or loss of focus:
+# https://stackoverflow.com/questions/38723277/tkinter-toplevel-destroy-window-when-not-focused
 
 
 # Create a mapping of keys to function (use frozenset as sets/lists are not hashable - so they can't be used as keys)
