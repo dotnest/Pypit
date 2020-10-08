@@ -89,7 +89,6 @@ def get_url_for_item(item):
     if url:
         return url
     else:
-        print("not found\n")
         return -1
 
 
@@ -142,12 +141,15 @@ def pricecheck():
         print(f"{stack_size} {format(stack_size / item_value, '.2f')}ex")
         return -1
     url = get_url_for_item(item_name)
+    if url == -1:
+        print("unsupported item\n")
+        return -1
     r = get_request(url)
     r = r.json()
     for line in r["lines"]:
         if item_info[1] in line.values():
             print("Hit", item_info[1])
-            print("Took", format(time() - start_time, ".3f"))
+            print(f'Took {format(time() - start_time, ".3f")}sec')
             item_value = get_item_value(item_name, stack_size, line)
             if item_value == -1:
                 print("couldn't find item value")
@@ -160,7 +162,7 @@ def pricecheck():
 # Create a mapping of keys to function (use frozenset as sets/lists are not hashable - so they can't be used as keys)
 # Note the missing `()` after quit_func and clipboard_to_tooltip as want to pass the function, not the return value of the function
 combination_to_function = {
-    frozenset([Key.ctrl_l, Key.shift, KeyCode(vk=81)]): quit_func,  # shift + q
+    frozenset([Key.ctrl_l, Key.shift, KeyCode(vk=81)]): quit_func,  # ctrl + shift + q
     frozenset([Key.ctrl_l, KeyCode(vk=68)]): pricecheck,  # left ctrl + d
     frozenset([KeyCode(vk=116)]): to_hideout,  # F5
 }
