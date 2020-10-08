@@ -2,51 +2,44 @@
 
 from pynput.keyboard import Key, KeyCode, Listener, Controller
 import pyperclip
-from time import sleep
-from ahk import AHK, Hotkey
-from ahk.window import Window
+from time import sleep, time
 import sample_items
 import logging
 import requests
 from datetime import datetime, timedelta
 import name_to_apiurl as ntu
+import window_name
 
 logging.basicConfig(level=logging.INFO)
 
-ahk = AHK()
 clipboard = pyperclip.paste()
 keyboard = Controller()
-script = f"ToolTip, {clipboard}, 500, 500"
-hotkey = Hotkey(ahk, "^p", script)
-persistent = "#Persistent\n"
-sleepscr = "Sleep 1000"
 requests_dict = dict()
+
+
+class Item:
+    def __init__(self, item_info):
+        self.item_info = item_info
 
 
 def quit_func():
     """ Function for properly closing ahk hotkey listener and quitting this script """
     print("Executed quit_func")
-    hotkey.stop()
     listener.stop()
     quit()
 
 
 def display_item_in_tooltip(item):
-    # https://www.autohotkey.com/docs/Tutorial.htm#s3
-    # TODO: read up on {Raw} tag, might not need to format item text with it
-    # TODO: reading ahk documentation first before writing this much MIGHT have been a good idea
-    ahk.run_script(f"ToolTip, \n(\n{item}\n)\n{sleepscr}")
+    # TODO: display info in a popup window that closes on esc
+    pass
 
 
-def format_raw_item(item):
-    """ Cleans up raw clipboard item text for usage in ahk script """
-    strings_to_remove = ["\r", "--------\n", '"', "'"]
-    result = item.replace("%", "perc")
-    for string in strings_to_remove:
-        result = result.replace(string, "")
-    result = result.split("\n")  # make it a readable list
-    result = "`n".join(result)  # join list elements with ahk's newline
-    return result
+def poe_in_focus():
+    win = window_name.get_active_window()
+    if win != "Path of Exile":
+        print("PoE window isn't in focus, returning...")
+        return False
+    return True
 
 
 def clipboard_to_tooltip():
@@ -55,21 +48,18 @@ def clipboard_to_tooltip():
     # TODO: try removing just the 'c' key to see if i can make chaining tooltips possible with ctrl pressed down
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
     sleep(0.01)  # prevent copying old data
-    win = ahk.active_window.process
-    print(win)
-    if "PathOfExile" in win:
+    if poe_in_focus():
         clipboard = pyperclip.paste()  # get clipboard text from clipboard
-        item = format_raw_item(clipboard)  # formats it
-        display_item_in_tooltip(item)
+        display_item_in_tooltip(clipboard)
     print("---end---")
 
 
 def to_hideout():
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
-    win = ahk.active_window.process
-    if "PathOfExile" in win:
+    if poe_in_focus():
         keyboard.press(Key.enter)
         keyboard.release(Key.enter)
+        # TODO: find a way to make this independent of keyboard layout
         keyboard.type("/hideout")
         keyboard.press(Key.enter)
         keyboard.release(Key.enter)
@@ -109,19 +99,22 @@ def get_item_value(item_name, stack_size, line):
             json_query = key
             break
     if json_query == "pay_value":
-        value = stack_size / float(line["pay"]["value"])
+        if line["pay"]:
+            return stack_size / float(line["pay"]["value"])
+        elif line["receive"]:
+            return stack_size * float(line["receive"]["value"])
     elif json_query == "chaosValue":
-        value = stack_size * line["chaosValue"]
+        return stack_size * line["chaosValue"]
     else:
-        raise AttributeError("no such item found")
-    return value
+        print("no such item found")
+        return -1
 
 
 # TODO: add Item class with Item.corrupted, Item.links, etc.
 def pricecheck():
+    start_time = time()
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
-    win = ahk.active_window.process
-    if "PathOfExile" not in win:
+    if not poe_in_focus():
         print("PoE window isn't in focus, returning...")
         return -1
     keyboard.press(Key.ctrl_l)
@@ -144,6 +137,8 @@ def pricecheck():
         for line in r["lines"]:
             if "Exalted Orb" in line["currencyTypeName"]:
                 item_value = float(line["receive"]["value"])
+                print("Took", format(time() - start_time, ".3f"))
+                break
         print(f"{stack_size} {format(stack_size / item_value, '.2f')}ex")
         return -1
     url = get_url_for_item(item_name)
@@ -152,7 +147,11 @@ def pricecheck():
     for line in r["lines"]:
         if item_info[1] in line.values():
             print("Hit", item_info[1])
+            print("Took", format(time() - start_time, ".3f"))
             item_value = get_item_value(item_name, stack_size, line)
+            if item_value == -1:
+                print("couldn't find item value")
+                return -1
             print(f'{stack_size} {format(item_value, ".2f")}c')
             break
     print()
@@ -201,5 +200,4 @@ def on_release(key):
 
 
 with Listener(on_press=on_press, on_release=on_release) as listener:
-    hotkey.start()
     listener.join()
