@@ -134,16 +134,16 @@ def get_item_value(item, line):
         if item.name in value:
             json_query = key
             break
-    if json_query == "pay_value":
-        if line["receive"]:
-            return item.stack_size / float(line["pay"]["value"])
-        elif line["pay"]:
-            return item.stack_size * float(line["receive"]["value"])
-    elif json_query == "chaosValue":
-        return item.stack_size * line["chaosValue"]
     else:
         print("no such item found")
         return -1
+    if json_query == "pay_value":
+        if line["receive"] and line["receive"]["value"]:
+            return item.stack_size * float(line["receive"]["value"])
+        elif line["pay"] and line["pay"]["value"]:
+            return item.stack_size / float(line["pay"]["value"])
+    elif json_query == "chaosValue":
+        return item.stack_size * line["chaosValue"]
 
 
 def press_ctrl_c():
