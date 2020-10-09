@@ -20,7 +20,7 @@ class Item:
         self.item_info = item_info
         self.name = item_info[1]
 
-        # self.stack_size and self.stack_size_str
+        # self.stack_size and self.stack_size_str, Int and String
         if "Stack Size:" in item_info[3]:
             self.stack_size_str = item_info[3].split(": ")[1].replace("\xa0", "")
             self.stack_size = int(self.stack_size_str.split("/")[0])
@@ -28,7 +28,7 @@ class Item:
             self.stack_size_str = "1"
             self.stack_size = 1
 
-        # self.corrupted
+        # self.corrupted, True or False
         for line in item_info:
             if line == "Corrupted":
                 self.corrupted = True
@@ -36,7 +36,7 @@ class Item:
         else:
             self.corrupted = False
 
-        # self.links and self.links_str
+        # self.links and self.links_str, both None or Int and String
         for line in item_info:
             if line.startswith("Sockets: "):
                 self.links_str = line[9:].strip()
@@ -74,7 +74,7 @@ def display_item_in_tooltip(item):
 def poe_in_focus():
     win = window_name.get_active_window()
     if win != "Path of Exile":
-        print("PoE window isn't in focus, returning...")
+        print("PoE window isn't in focus")
         return False
     return True
 
@@ -129,18 +129,18 @@ def get_url_for_item(item):
         return -1
 
 
-def get_item_value(item_name, stack_size, line):
+def get_item_value(item, line):
     for key, value in ntu.get_value_dict.items():
-        if item_name in value:
+        if item.name in value:
             json_query = key
             break
     if json_query == "pay_value":
-        if line["pay"]:
-            return stack_size / float(line["pay"]["value"])
-        elif line["receive"]:
-            return stack_size * float(line["receive"]["value"])
+        if line["receive"]:
+            return item.stack_size / float(line["pay"]["value"])
+        elif line["pay"]:
+            return item.stack_size * float(line["receive"]["value"])
     elif json_query == "chaosValue":
-        return stack_size * line["chaosValue"]
+        return item.stack_size * line["chaosValue"]
     else:
         print("no such item found")
         return -1
@@ -191,8 +191,16 @@ def pricecheck():
     # finding and displaying item value from api response
     for line in r["lines"]:
         if item.name in line.values():
+            if item.links:
+                if item.links < 5:
+                    poeninja_links = 0
+                else:
+                    poeninja_links = item.links
+                if line["links"] != poeninja_links:
+                    print(f"---skipping {line['links']}l---")
+                    continue
             print("Hit", item.name)
-            item_value = get_item_value(item.name, item.stack_size, line)
+            item_value = get_item_value(item, line)
             if item_value == -1:
                 print("couldn't find item value")
                 return -1
