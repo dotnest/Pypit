@@ -7,6 +7,7 @@ import requests
 from datetime import datetime, timedelta
 import name_to_apiurl as ntu
 import window_name
+import tkinter as tk
 
 logging.basicConfig(level=logging.INFO)
 
@@ -17,6 +18,45 @@ requests_cache_dict = dict()
 class Item:
     def __init__(self, item_info):
         self.item_info = item_info
+        self.name = item_info[1]
+
+        # self.stack_size and self.stack_size_str
+        if "Stack Size:" in item_info[3]:
+            self.stack_size_str = item_info[3].split(": ")[1].replace("\xa0", "")
+            self.stack_size = int(self.stack_size_str.split("/")[0])
+        else:
+            self.stack_size_str = "1"
+            self.stack_size = 1
+
+        # self.corrupted
+        for line in item_info:
+            if line == "Corrupted":
+                self.corrupted = True
+                break
+        else:
+            self.corrupted = False
+
+        # self.links and self.links_str
+        for line in item_info:
+            if line.startswith("Sockets: "):
+                self.links_str = line[9:].strip()
+                self.links = max(
+                    [len(link) // 2 + 1 for link in self.links_str.split(" ")]
+                )
+                break
+        else:
+            self.links_str = None
+            self.links = None
+
+    def __repr__(self):
+        return "\n".join(
+            [
+                f"{self.name}, corrupted={self.corrupted}",
+                f"stack_sizes=({self.stack_size}, {self.stack_size_str})",
+                f"links=({self.links}, {self.links_str})",
+                "---",
+            ]
+        )
 
 
 def quit_func():
@@ -114,7 +154,6 @@ def press_ctrl_c():
     sleep(0.03)
 
 
-# TODO: add Item class with Item.corrupted, Item.links, etc.
 def pricecheck():
     start_time = time()  # for checking pricecheck performance
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
@@ -126,29 +165,22 @@ def pricecheck():
     press_ctrl_c()
     item_info = pyperclip.paste().split("\r\n")
     item_info[0] = item_info[0].split()[1]
-
-    if "Stack Size:" in item_info[3]:
-        stack_size_str = item_info[3].split(": ")[1]
-        stack_size = int(stack_size_str.split("/")[0].replace("\xa0", ""))
-    else:
-        stack_size = 1
-
-    item_name = item_info[1]
-    print("Got", item_name)
+    item = Item(item_info)
+    print(item)
 
     # edge case for Chaos Orb
-    if item_name == "Chaos Orb":
+    if item.name == "Chaos Orb":
         r = get_request(ntu.name_to_URL_dict[ntu.currency]).json()
         for line in r["lines"]:
             if "Exalted Orb" in line["currencyTypeName"]:
                 item_value = float(line["receive"]["value"])
                 print("Took", format(time() - start_time, ".3f"))
                 break
-        print(f"{stack_size} {format(stack_size / item_value, '.2f')}ex\n")
+        print(f"{item.stack_size} {format(item.stack_size / item_value, '.2f')}ex\n")
         return -1
 
     # getting appropriate poe.ninja "page" api response
-    url = get_url_for_item(item_name)
+    url = get_url_for_item(item.name)
     if url == -1:
         print("unsupported item")
         print(f'Took {format(time() - start_time, ".3f")}sec\n')
@@ -158,14 +190,14 @@ def pricecheck():
 
     # finding and displaying item value from api response
     for line in r["lines"]:
-        if item_info[1] in line.values():
-            print("Hit", item_info[1])
-            print(f'Took {format(time() - start_time, ".3f")}sec')
-            item_value = get_item_value(item_name, stack_size, line)
+        if item.name in line.values():
+            print("Hit", item.name)
+            item_value = get_item_value(item.name, item.stack_size, line)
             if item_value == -1:
                 print("couldn't find item value")
                 return -1
-            print(f'{stack_size} {format(item_value, ".2f")}c')
+            print(f'Took {format(time() - start_time, ".3f")}sec')
+            print(f'{item.stack_size} {format(item_value, ".2f")}c')
             break
     print()
 
