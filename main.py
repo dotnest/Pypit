@@ -128,7 +128,8 @@ def pricecheck():
     item_info[0] = item_info[0].split()[1]
 
     if "Stack Size:" in item_info[3]:
-        stack_size = int(item_info[3].split()[2].split("/")[0])
+        stack_size_str = item_info[3].split(": ")[1]
+        stack_size = int(stack_size_str.split("/")[0].replace("\xa0", ""))
     else:
         stack_size = 1
 
@@ -149,7 +150,8 @@ def pricecheck():
     # getting appropriate poe.ninja "page" api response
     url = get_url_for_item(item_name)
     if url == -1:
-        print("unsupported item\n")
+        print("unsupported item")
+        print(f'Took {format(time() - start_time, ".3f")}sec\n')
         return -1
     r = get_request(url)
     r = r.json()
@@ -179,6 +181,7 @@ combination_to_function = {
     frozenset([Key.ctrl_l, Key.shift, KeyCode(vk=81)]): quit_func,  # ctrl + shift + q
     frozenset([Key.ctrl_l, KeyCode(vk=68)]): pricecheck,  # left ctrl + d
     frozenset([KeyCode(vk=116)]): to_hideout,  # F5
+    # TODO: ctrl-f searches for mouseover item
 }
 
 # The currently pressed keys (initially empty)
