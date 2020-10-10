@@ -17,6 +17,10 @@ logging.basicConfig(level=logging.INFO)
 keyboard = Controller()
 requests_cache = dict()
 
+# TODO: tests with mock api, Item.price(sample.headhunter) == 4950c -> True
+# TODO: see if different .gitignore files are possible for dev and
+# master branches to keep some dev files in dev branch but not in master
+
 
 class Item:
     def __init__(self, item_info):
@@ -135,11 +139,16 @@ def get_item_value(item, item_json):
         print("no such item found")
         return -1
 
-    if json_query == "pay_value":
-        if item_json["receive"] and item_json["receive"]["value"]:
-            return item.stack_size * float(item_json["receive"]["value"])
-        elif item_json["pay"] and item_json["pay"]["value"]:
-            return item.stack_size / float(item_json["pay"]["value"])
+    if json_query == "chaosEquivalent":
+        if item_json["chaosEquivalent"] > 1:
+            # for higher-value items (Mirror, Exalt, Chayula Pure Stone)
+            return item.stack_size * item_json["chaosEquivalent"]
+        else:
+            # for lower-value items (Perandus Coins, Scroll of Wisdom, splinters)
+            if item_json["pay"] and item_json["pay"]["value"]:
+                return item.stack_size / item_json["pay"]["value"]
+            elif item_json["receive"] and item_json["receive"]["value"]:
+                return item.stack_size * item_json["receive"]["value"]
     elif json_query == "chaosValue":
         return item.stack_size * item_json["chaosValue"]
 
@@ -220,7 +229,8 @@ combination_to_function = {
     frozenset([Key.ctrl_l, Key.shift, KeyCode(vk=81)]): quit_func,  # ctrl + shift + q
     frozenset([Key.ctrl_l, KeyCode(vk=68)]): pricecheck,  # left ctrl + d
     frozenset([KeyCode(vk=116)]): to_hideout,  # F5
-    # TODO: ctrl-f searches for mouseover item
+    # TODO: Ctrl-f searches for mouseover item
+    # TODO: F4 to leave party
 }
 
 # The currently pressed keys (initially empty)

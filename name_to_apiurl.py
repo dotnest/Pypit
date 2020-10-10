@@ -1,3 +1,21 @@
+# possible leagues:
+# "Heist"
+# "Hardcore%20Heist"
+# "Standard"
+# "Hardcore"
+
+LEAGUE = "Heist"
+API_BASE_URL = "https://poe.ninja/api/data/"
+
+
+def currency_overview_url(currency_type):
+    return f"{API_BASE_URL}currencyoverview?league={LEAGUE}&type={currency_type}&language=en"
+
+
+def item_overview_url(item_type):
+    return f"{API_BASE_URL}itemoverview?league={LEAGUE}&type={item_type}&language=en"
+
+
 currency = frozenset(
     [
         "Mirror of Kalandra",
@@ -2791,27 +2809,28 @@ chaos_value_item_names = frozenset(
 
 get_value_dict = {
     "chaosValue": chaos_value_item_names,
-    "pay_value": currency.union(fragments),
+    "chaosEquivalent": currency.union(fragments),
 }
 
+
 name_to_URL_dict = {
-    currency: "https://poe.ninja/api/data/currencyoverview?league=Heist&type=Currency&language=en",
-    fragments: "https://poe.ninja/api/data/currencyoverview?league=Heist&type=Fragment&language=en",
-    delirium_orbs: "https://poe.ninja/api/data/itemoverview?league=Heist&type=DeliriumOrb&language=en",
-    watchstones: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Watchstone&language=en",
-    oils: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Oil&language=en",
-    incubators: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Incubator&language=en",
-    scarabs: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Scarab&language=en",
-    fossils: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Fossil&language=en",
-    resonators: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Resonator&language=en",
-    essences: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Essence&language=en",
-    divination_cards: "https://poe.ninja/api/data/itemoverview?league=Heist&type=DivinationCard&language=en",
-    prophecies: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Prophecy&language=en",
-    unique_jewels: "https://poe.ninja/api/data/itemoverview?league=Heist&type=UniqueJewel&language=en",
-    unique_flasks: "https://poe.ninja/api/data/itemoverview?league=Heist&type=UniqueFlask&language=en",
-    unique_weapons: "https://poe.ninja/api/data/itemoverview?league=Heist&type=UniqueWeapon&language=en",
-    unique_armours: "https://poe.ninja/api/data/itemoverview?league=Heist&type=UniqueArmour&language=en",
-    unique_accessories: "https://poe.ninja/api/data/itemoverview?league=Heist&type=UniqueAccessory&language=en",
-    vials: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Vial&language=en",
-    beasts: "https://poe.ninja/api/data/itemoverview?league=Heist&type=Beast&language=en",
+    currency: currency_overview_url("Currency"),
+    fragments: currency_overview_url("Fragment"),
+    delirium_orbs: item_overview_url("DeliriumOrb"),
+    watchstones: item_overview_url("Watchstone"),
+    oils: item_overview_url("Oil"),
+    incubators: item_overview_url("Incubator"),
+    scarabs: item_overview_url("Scarab"),
+    fossils: item_overview_url("Fossil"),
+    resonators: item_overview_url("Resonator"),
+    essences: item_overview_url("Essence"),
+    divination_cards: item_overview_url("DivinationCard"),
+    prophecies: item_overview_url("Prophecy"),
+    unique_jewels: item_overview_url("UniqueJewel"),
+    unique_flasks: item_overview_url("UniqueFlask"),
+    unique_weapons: item_overview_url("UniqueWeapon"),
+    unique_armours: item_overview_url("UniqueArmour"),
+    unique_accessories: item_overview_url("UniqueAccessory"),
+    vials: item_overview_url("Vial"),
+    beasts: item_overview_url("Beast"),
 }
