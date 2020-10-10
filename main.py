@@ -24,7 +24,10 @@ requests_cache = dict()
 
 class Item:
     def __init__(self, item_info):
+        """Parse raw clipboard data."""
+        item_info = item_info.split("\r\n")
         self.item_info = item_info
+        self.rarity = item_info[0].split()[1]
         self.name = item_info[1]
 
         # self.stack_size and self.stack_size_str, Int and String
@@ -121,23 +124,23 @@ def request_json(url):
 
 
 def get_url_for_item(item):
-    """Return an appropriate api url to call for an item."""
+    """Return an appropriate api url to call for an item or None if there is not one."""
     for key, value in ntu.name_to_URL_dict.items():
         if item.name in key:
             return value
     else:
-        return -1
+        return None
 
 
 def get_item_value(item, item_json):
-    """Return total item value."""
+    """Return total item value or None on failure."""
     for key, value in ntu.get_value_dict.items():
         if item.name in value:
             json_query = key
             break
     else:
         print("no such item found")
-        return -1
+        return None
 
     if json_query == "chaosEquivalent":
         if item_json["chaosEquivalent"] > 1:
@@ -162,37 +165,26 @@ def press_ctrl_c():
     sleep(0.03)
 
 
-def pricecheck():
-    start_time = time()  # for checking pricecheck performance
-    pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
-    if not poe_in_focus():
-        print("PoE window isn't in focus, returning...\n")
-        return -1
-
-    # getting raw item info from the game and formatting its type/rarity
-    press_ctrl_c()
-    item_info = pyperclip.paste().split("\r\n")
-    item_info[0] = item_info[0].split()[1]
-    item = Item(item_info)
-    print(item)
-
+def pricecheck(item):
+    """Return poeninja price for item"""
     # edge case for Chaos Orb
     if item.name == "Chaos Orb":
         r = request_json(ntu.name_to_URL_dict[ntu.currency])
         for line in r["lines"]:
             if "Exalted Orb" in line["currencyTypeName"]:
                 item_value = float(line["receive"]["value"])
-                print("Took", format(time() - start_time, ".3f"))
-                break
-        print(f"{item.stack_size} {format(item.stack_size / item_value, '.2f')}ex\n")
-        return -1
+                print(
+                    f"{item.stack_size} {format(item.stack_size / item_value, '.2f')}ex\n"
+                )
+                return item_value
+        else:
+            return None
 
     # getting appropriate poe.ninja "page" api response
     url = get_url_for_item(item)
-    if url == -1:
+    if url is None:
         print("unsupported item")
-        print(f'Took {format(time() - start_time, ".3f")}sec\n')
-        return -1
+        return None
     category_json = request_json(url)
 
     # finding and displaying item value from api response
@@ -209,13 +201,13 @@ def pricecheck():
                     continue
             print("Hit", item.name)
             item_value = get_item_value(item, item_json)
-            if item_value == -1:
+            if item_value is None:
                 print("couldn't find item value")
-                return -1
-            print(f'Took {format(time() - start_time, ".3f")}sec')
+                return None
             print(f'{item.stack_size} {format(item_value, ".2f")}c')
             break
-    print()
+
+    return item_value
 
 
 # TODO: make a popup tkinter window with item and item value info
@@ -223,11 +215,39 @@ def pricecheck():
 # https://stackoverflow.com/questions/38723277/tkinter-toplevel-destroy-window-when-not-focused
 
 
+def item_info_popup():
+    """Show a window with item info."""
+    start_time = time()  # for checking pricecheck performance
+    pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
+    if not poe_in_focus():
+        print("PoE window isn't in focus, returning...\n")
+        return -1
+
+    # getting raw item info from the game
+    press_ctrl_c()
+    item_info = pyperclip.paste()
+    item = Item(item_info)
+    item.value = pricecheck(item)
+    if item.value:
+        item.value_str = format(item.value, ".2f")
+    else:
+        item.value_str = "no price info"
+    print(item)
+
+    window = tk.Tk()
+
+    item_name = tk.Label(text=f"{item.name}\n{item.value_str}c")
+    item_name.grid()
+    print(f'Took {format(time() - start_time, ".3f")}sec\n')
+
+    window.mainloop()
+
+
 # Create a mapping of keys to function (use frozenset as sets/lists are not hashable - so they can't be used as keys)
 # Note the missing `()` after quit_func and clipboard_to_tooltip as want to pass the function, not the return value of the function
 combination_to_function = {
     frozenset([Key.ctrl_l, Key.shift, KeyCode(vk=81)]): quit_func,  # ctrl + shift + q
-    frozenset([Key.ctrl_l, KeyCode(vk=68)]): pricecheck,  # left ctrl + d
+    frozenset([Key.ctrl_l, KeyCode(vk=68)]): item_info_popup,  # left ctrl + d
     frozenset([KeyCode(vk=116)]): to_hideout,  # F5
     # TODO: Ctrl-f searches for mouseover item
     # TODO: F4 to leave party
