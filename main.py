@@ -117,7 +117,7 @@ def request_json(url):
 
 
 def get_url_for_item(item):
-    """Return ap appropriate api url to call for an item."""
+    """Return an appropriate api url to call for an item."""
     for key, value in ntu.name_to_URL_dict.items():
         if item.name in key:
             return value
