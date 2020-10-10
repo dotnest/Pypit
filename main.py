@@ -9,10 +9,13 @@ import name_to_apiurl as ntu
 import window_name
 import tkinter as tk
 
+# maximum response age before it's fetched from poeninja again
+RESPONSE_TTL = 30
+
 logging.basicConfig(level=logging.INFO)
 
 keyboard = Controller()
-requests_cache_dict = dict()
+requests_cache = dict()
 
 
 class Item:
@@ -48,30 +51,28 @@ class Item:
             self.links_str = None
             self.links = None
 
+        # TODO?: tie in pricecheck to Item.price_one/stack
+
     def __repr__(self):
         return "\n".join(
             [
                 f"{self.name}, corrupted={self.corrupted}",
                 f"stack_sizes=({self.stack_size}, {self.stack_size_str})",
                 f"links=({self.links}, {self.links_str})",
-                "---",
+                "---------",
             ]
         )
 
 
 def quit_func():
-    """ Function for properly quitting this script """
+    """Exit the script properly."""
     print("Executed quit_func")
     listener.stop()
     quit()
 
 
-def display_item_in_tooltip(item):
-    # TODO: display info in a popup window that closes on esc
-    pass
-
-
 def poe_in_focus():
+    """Check if Path of Exile window is in focus."""
     win = window_name.get_active_window()
     if win != "Path of Exile":
         print("PoE window isn't in focus")
@@ -79,19 +80,8 @@ def poe_in_focus():
     return True
 
 
-def clipboard_to_tooltip():
-    """ Gets item's text from clipboard, formats it, shows a tooltip with it """
-    print("Caught ctrl-c")
-    # TODO: try removing just the 'c' key to see if i can make chaining tooltips possible with ctrl pressed down
-    pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
-    sleep(0.01)  # prevent copying old data
-    if poe_in_focus():
-        clipboard = pyperclip.paste()  # get clipboard text from clipboard
-        display_item_in_tooltip(clipboard)
-    print("---end---")
-
-
 def to_hideout():
+    """Press enter, input '/hideout', press enter."""
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
     if poe_in_focus():
         keyboard.press(Key.enter)
@@ -103,33 +93,40 @@ def to_hideout():
         sleep(1)  # lord forgive me for this temporary solution while i'm learning stuff
 
 
-def get_request(url):
-    if url not in requests_cache_dict:
+def request_json(url):
+    """Return json for url not older than RESPONSE_TTL."""
+    if url not in requests_cache:
         print("adding new entry in dict")
-        requests_cache_dict[url] = (datetime.now(), requests.get(url))
-        return requests_cache_dict[url][1]
-    if datetime.now() - requests_cache_dict[url][0] > timedelta(minutes=5):
+        requests_cache[url] = {
+            "time_fetched": datetime.now(),
+            "response": requests.get(url).json(),
+        }
+        return requests_cache[url]["response"]
+
+    response_age = datetime.now() - requests_cache[url]["time_fetched"]
+    if response_age > timedelta(minutes=RESPONSE_TTL):
         print("updating entry in dict")
-        requests_cache_dict[url] = (datetime.now(), requests.get(url))
-        return requests_cache_dict[url][1]
+        requests_cache[url] = {
+            "time_fetched": datetime.now(),
+            "response": requests.get(url).json(),
+        }
+        return requests_cache[url]["response"]
+
     print("returning fresh enough response from dict")
-    return requests_cache_dict[url][1]
+    return requests_cache[url]["response"]
 
 
 def get_url_for_item(item):
-    url = None
+    """Return ap appropriate api url to call for an item."""
     for key, value in ntu.name_to_URL_dict.items():
-        if item in key:
-            url = value
-            break
-
-    if url:
-        return url
+        if item.name in key:
+            return value
     else:
         return -1
 
 
-def get_item_value(item, line):
+def get_item_value(item, item_json):
+    """Return total item value."""
     for key, value in ntu.get_value_dict.items():
         if item.name in value:
             json_query = key
@@ -137,16 +134,18 @@ def get_item_value(item, line):
     else:
         print("no such item found")
         return -1
+
     if json_query == "pay_value":
-        if line["receive"] and line["receive"]["value"]:
-            return item.stack_size * float(line["receive"]["value"])
-        elif line["pay"] and line["pay"]["value"]:
-            return item.stack_size / float(line["pay"]["value"])
+        if item_json["receive"] and item_json["receive"]["value"]:
+            return item.stack_size * float(item_json["receive"]["value"])
+        elif item_json["pay"] and item_json["pay"]["value"]:
+            return item.stack_size / float(item_json["pay"]["value"])
     elif json_query == "chaosValue":
-        return item.stack_size * line["chaosValue"]
+        return item.stack_size * item_json["chaosValue"]
 
 
 def press_ctrl_c():
+    """Press ctrl-c and add a delay for game to copy item info in clipboard buffer."""
     keyboard.press(Key.ctrl_l)
     keyboard.press(KeyCode(vk=67))
     keyboard.release(Key.ctrl_l)
@@ -170,7 +169,7 @@ def pricecheck():
 
     # edge case for Chaos Orb
     if item.name == "Chaos Orb":
-        r = get_request(ntu.name_to_URL_dict[ntu.currency]).json()
+        r = request_json(ntu.name_to_URL_dict[ntu.currency])
         for line in r["lines"]:
             if "Exalted Orb" in line["currencyTypeName"]:
                 item_value = float(line["receive"]["value"])
@@ -180,27 +179,27 @@ def pricecheck():
         return -1
 
     # getting appropriate poe.ninja "page" api response
-    url = get_url_for_item(item.name)
+    url = get_url_for_item(item)
     if url == -1:
         print("unsupported item")
         print(f'Took {format(time() - start_time, ".3f")}sec\n')
         return -1
-    r = get_request(url)
-    r = r.json()
+    category_json = request_json(url)
 
     # finding and displaying item value from api response
-    for line in r["lines"]:
-        if item.name in line.values():
+    for item_json in category_json["lines"]:
+        # TODO: optimize item_json.values() to item_json["chaosValue"]/["receive"]["value"]
+        if item.name in item_json.values():
             if item.links:
                 if item.links < 5:
                     poeninja_links = 0
                 else:
                     poeninja_links = item.links
-                if line["links"] != poeninja_links:
-                    print(f"---skipping {line['links']}l---")
+                if item_json["links"] != poeninja_links:
+                    print(f"---skipping {item_json['links']}l---")
                     continue
             print("Hit", item.name)
-            item_value = get_item_value(item, line)
+            item_value = get_item_value(item, item_json)
             if item_value == -1:
                 print("couldn't find item value")
                 return -1
@@ -237,12 +236,12 @@ def get_vk(key):
 
 
 def is_combination_pressed(combination):
-    """ Check if a combination is satisfied using the keys pressed in pressed_vks """
+    """Check if a combination is satisfied using the keys pressed in pressed_vks"""
     return all([get_vk(key) in pressed_vks for key in combination])
 
 
 def on_press(key):
-    """ When a key is pressed """
+    """When a key is pressed"""
     vk = get_vk(key)  # Get the key's vk
     pressed_vks.add(vk)  # Add it to the set of currently pressed keys
 
@@ -252,7 +251,7 @@ def on_press(key):
 
 
 def on_release(key):
-    """ When a key is released """
+    """When a key is released"""
     vk = get_vk(key)  # Get the key's vk
     if vk in pressed_vks:
         pressed_vks.remove(vk)  # Remove it from the set of currently pressed keys
