@@ -168,6 +168,7 @@ def press_ctrl_c():
 def pricecheck(item):
     """Return poeninja price for item"""
     # edge case for Chaos Orb
+    pricecheck_time = time()
     if item.name == "Chaos Orb":
         r = request_json(ntu.name_to_URL_dict[ntu.currency])
         for line in r["lines"]:
@@ -207,12 +208,8 @@ def pricecheck(item):
             print(f'{item.stack_size} {format(item_value, ".2f")}c')
             break
 
+    print(f"Prichecheck finished in {format(time() - pricecheck_time, '.3f')}sec")
     return item_value
-
-
-# TODO: make a popup tkinter window with item and item value info
-# to make popup close on Esc key press or loss of focus:
-# https://stackoverflow.com/questions/38723277/tkinter-toplevel-destroy-window-when-not-focused
 
 
 def item_info_popup():
@@ -235,6 +232,9 @@ def item_info_popup():
     print(item)
 
     window = tk.Tk()
+    window.after(1, lambda: window.focus_force())  # focus on create
+    window.bind("<FocusOut>", lambda e: window.destroy())  # destroy on lose focus
+    window.bind("<Escape>", lambda e: window.destroy())  # destroy on Escape
 
     item_name = tk.Label(text=f"{item.name}\n{item.value_str}c")
     item_name.grid()
