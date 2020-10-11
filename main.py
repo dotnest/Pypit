@@ -176,8 +176,8 @@ def pricecheck(item):
     if item.name == "Chaos Orb":
         r = request_json(ntu.name_to_URL_dict[ntu.currency])
         for line in r["lines"]:
-            if "Exalted Orb" in line["currencyTypeName"]:
-                item_value = float(line["pay"]["value"])
+            if line["currencyTypeName"] == "Exalted Orb":
+                item_value = line["pay"]["value"]
                 print(
                     f"{item.stack_size} {format(item.stack_size * item_value, '.2f')}ex\n"
                 )
