@@ -25,6 +25,10 @@ requests_cache = dict()
 class Item:
     def __init__(self, item_info):
         """Parse raw clipboard data."""
+        if not item_info.startswith("Rarity: "):
+            print("invalid item data")
+            self.name = None
+            return None
         item_info = item_info.split("\r\n")
         self.item_info = item_info
         self.rarity = item_info[0].split()[1]
@@ -173,11 +177,11 @@ def pricecheck(item):
         r = request_json(ntu.name_to_URL_dict[ntu.currency])
         for line in r["lines"]:
             if "Exalted Orb" in line["currencyTypeName"]:
-                item_value = float(line["receive"]["value"])
+                item_value = float(line["pay"]["value"])
                 print(
-                    f"{item.stack_size} {format(item.stack_size / item_value, '.2f')}ex\n"
+                    f"{item.stack_size} {format(item.stack_size * item_value, '.2f')}ex\n"
                 )
-                return item_value
+                return item_value * item.stack_size
         else:
             return None
 
@@ -226,7 +230,10 @@ def item_info_popup():
     item = Item(item_info)
     item.value = pricecheck(item)
     if item.value:
-        item.value_str = format(item.value, ".2f")
+        if item.name == "Chaos Orb":
+            item.value_str = f'{format(item.value, ".2f")}ex'
+        else:
+            item.value_str = f'{format(item.value, ".2f")}c'
     else:
         item.value_str = "no price info"
     print(item)
@@ -235,8 +242,9 @@ def item_info_popup():
     window.after(1, lambda: window.focus_force())  # focus on create
     window.bind("<FocusOut>", lambda e: window.destroy())  # destroy on lose focus
     window.bind("<Escape>", lambda e: window.destroy())  # destroy on Escape
+    window.bind("<Control_L>", lambda e: window.destroy())  # destroy on lCtrl
 
-    item_name = tk.Label(text=f"{item.name}\n{item.value_str}c")
+    item_name = tk.Label(text=f"{item.name}\n{item.stack_size_str}\n{item.value_str}")
     item_name.grid()
     print(f'Took {format(time() - start_time, ".3f")}sec\n')
 
