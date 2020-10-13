@@ -37,9 +37,10 @@ class Item:
         # self.stack_size and self.stack_size_str, Int and String
         if "Stack Size:" in item_info[3]:
             self.stack_size_str = item_info[3].split(": ")[1].replace("\xa0", "")
+            # self.stack_size_str = f"{self.stack_size_str}\n"
             self.stack_size = int(self.stack_size_str.split("/")[0])
         else:
-            self.stack_size_str = "1"
+            self.stack_size_str = ""
             self.stack_size = 1
 
         # self.corrupted, True or False
@@ -65,12 +66,18 @@ class Item:
         # TODO?: tie in pricecheck to Item.price_one/stack
 
     def __repr__(self):
+        if self.notes:
+            ending = "\n".join(self.notes)
+            ending = f"{ending}\n---------"
+        else:
+            ending = "---------"
+
         return "\n".join(
             [
-                f"{self.name}, corrupted={self.corrupted}",
-                f"stack_sizes=({self.stack_size}, {self.stack_size_str})",
+                self.name,
+                f"stack_size={self.stack_size}, corrupted={self.corrupted}",
                 f"links=({self.links}, {self.links_str})",
-                "---------",
+                ending,
             ]
         )
 
@@ -137,7 +144,7 @@ def get_url_for_item(item):
 
 
 def get_item_value(item, item_json):
-    """Return total item value or None on failure."""
+    """Return total item value from item_json or None on failure."""
     for key, value in ntu.get_value_dict.items():
         if item.name in value:
             json_query = key
@@ -207,7 +214,7 @@ def pricecheck(item):
                     poeninja_links = item.links
                 if item_json["links"] != poeninja_links:
                     item.notes.append(
-                        f"skipped {item_json['links']}l {item_json['chaosValue']}c"
+                        f"{item_json['links']}l - {item_json['chaosValue']}c"
                     )
                     continue
             print("Hit", item.name)
@@ -245,15 +252,38 @@ def item_info_popup():
     print(item)
 
     notes = "\n".join(item.notes)
-    item_info = f"{item.name}\n{item.stack_size_str}\n{item.value_str}\n{notes}"
+    item_info = f"{item.name}\n{item.stack_size_str}\n{item.value_str}"
 
     window = tk.Tk()
+    window.title("Pypit")
     window.after(1, lambda: window.focus_force())  # focus on create
     window.bind("<FocusOut>", lambda e: window.destroy())  # destroy on lose focus
     window.bind("<Escape>", lambda e: window.destroy())  # destroy on Escape
     window.bind("<Control_L>", lambda e: window.destroy())  # destroy on lCtrl
-    item_label = tk.Label(text=item_info)
+
+    item_frame = tk.Frame(window, bg="#1e1e1e")
+    item_frame.grid()
+
+    item_label = tk.Label(
+        item_frame,
+        text=item_info,
+        bd=40,
+        bg="#1e1e1e",
+        fg="#a4b5b0",
+        font=("Helvetica", 14),
+    )
     item_label.grid()
+
+    if item.notes:
+        notes_label = tk.Label(
+            item_frame,
+            text=notes,
+            bd=40,
+            bg="#1e1e1e",
+            fg="#a4b5b0",
+            font=("Helvetica", 12),
+        )
+        notes_label.grid()
 
     print(f'Took {format(time() - start_time, ".3f")}sec\n')
     window.mainloop()
