@@ -1,13 +1,12 @@
 from pynput.keyboard import Key, KeyCode, Listener, Controller
 import pyperclip
+import tkinter as tk
 from time import sleep, time
-import sample_items
+from datetime import datetime, timedelta
 import logging
 import requests
-from datetime import datetime, timedelta
 import name_to_apiurl as ntu
 import window_name
-import tkinter as tk
 
 # maximum response age before it's fetched from poeninja again
 RESPONSE_TTL = 30
@@ -33,6 +32,7 @@ class Item:
         self.item_info = item_info
         self.rarity = item_info[0].split()[1]
         self.name = item_info[1]
+        self.notes = []
 
         # self.stack_size and self.stack_size_str, Int and String
         if "Stack Size:" in item_info[3]:
@@ -192,17 +192,23 @@ def pricecheck(item):
         return None
     category_json = request_json(url)
 
+    if item.name in ntu.currency or item.name in ntu.fragments:
+        name_key = "currencyTypeName"
+    else:
+        name_key = "name"
+
     # finding and displaying item value from api response
     for item_json in category_json["lines"]:
-        # TODO: optimize item_json.values() to item_json["chaosValue"]/["receive"]["value"]
-        if item.name in item_json.values():
+        if item.name == item_json[name_key]:
             if item.links:
                 if item.links < 5:
                     poeninja_links = 0
                 else:
                     poeninja_links = item.links
                 if item_json["links"] != poeninja_links:
-                    print(f"---skipping {item_json['links']}l---")
+                    item.notes.append(
+                        f"skipped {item_json['links']}l {item_json['chaosValue']}c"
+                    )
                     continue
             print("Hit", item.name)
             item_value = get_item_value(item, item_json)
@@ -238,16 +244,18 @@ def item_info_popup():
         item.value_str = "no price info"
     print(item)
 
+    notes = "\n".join(item.notes)
+    item_info = f"{item.name}\n{item.stack_size_str}\n{item.value_str}\n{notes}"
+
     window = tk.Tk()
     window.after(1, lambda: window.focus_force())  # focus on create
     window.bind("<FocusOut>", lambda e: window.destroy())  # destroy on lose focus
     window.bind("<Escape>", lambda e: window.destroy())  # destroy on Escape
     window.bind("<Control_L>", lambda e: window.destroy())  # destroy on lCtrl
+    item_label = tk.Label(text=item_info)
+    item_label.grid()
 
-    item_name = tk.Label(text=f"{item.name}\n{item.stack_size_str}\n{item.value_str}")
-    item_name.grid()
     print(f'Took {format(time() - start_time, ".3f")}sec\n')
-
     window.mainloop()
 
 
