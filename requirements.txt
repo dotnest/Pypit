@@ -1,0 +1,4 @@
+pynput==1.7.1
+pyperclip==1.8.0
+pywin32==228
+requests==2.24.0
