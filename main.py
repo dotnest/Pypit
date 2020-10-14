@@ -146,9 +146,9 @@ def get_url_for_item(item):
 
 def get_item_value(item, item_json):
     """Return total item value from item_json or None on failure."""
-    for key, value in ntu.get_value_dict.items():
-        if item.name in value:
-            json_query = key
+    for items in ntu.get_value_dict:
+        if item.name in items:
+            json_query = ntu.get_value_dict[items]
             break
     else:
         logging.info("no such item found")
@@ -179,8 +179,8 @@ def press_ctrl_c():
 
 def pricecheck(item):
     """Return poeninja price for item"""
+    pricecheck_time = time()  # tracking pricecheck performance
     # edge case for Chaos Orb
-    pricecheck_time = time()
     if item.name == "Chaos Orb":
         r = request_json(ntu.name_to_URL_dict[ntu.currency])
         for line in r["lines"]:
@@ -234,7 +234,7 @@ def pricecheck(item):
 
 def item_info_popup():
     """Show a window with item info."""
-    start_time = time()  # for checking pricecheck performance
+    start_time = time()  # for checking total performance
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
     if not poe_in_focus():
         logging.info("PoE window isn't in focus, returning...\n")
@@ -245,6 +245,8 @@ def item_info_popup():
     item_info = pyperclip.paste()
     item = Item(item_info)
     item.value = pricecheck(item)
+
+    # setting string representation of item.value
     if item.value:
         if item.name == "Chaos Orb":
             item.value_str = f'{format(item.value, ".2f")}ex'
@@ -257,6 +259,7 @@ def item_info_popup():
     notes = "\n".join(item.notes)
     item_info = f"{item.name}\n{item.stack_size_str}\n{item.value_str}"
 
+    # creating popup window
     window = tk.Tk()
     window.title("Pypit")
     window.after(1, lambda: window.focus_force())  # focus on create
@@ -267,6 +270,7 @@ def item_info_popup():
     item_frame = tk.Frame(window, bg="#1e1e1e")
     item_frame.grid()
 
+    # main label with item_info text
     item_label = tk.Label(
         item_frame,
         text=item_info,
@@ -277,6 +281,7 @@ def item_info_popup():
     )
     item_label.grid()
 
+    # secondary label if there are additional item notes
     if item.notes:
         notes_label = tk.Label(
             item_frame,
@@ -289,6 +294,8 @@ def item_info_popup():
         notes_label.grid()
 
     logging.info(f'Took {format(time() - start_time, ".3f")}sec\n')
+
+    # opening popup window
     window.mainloop()
 
 

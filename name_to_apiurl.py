@@ -2808,8 +2808,8 @@ chaos_value_item_names = frozenset(
 
 
 get_value_dict = {
-    "chaosValue": chaos_value_item_names,
-    "chaosEquivalent": currency.union(fragments),
+    chaos_value_item_names: "chaosValue",
+    currency.union(fragments): "chaosEquivalent",
 }
 
 
