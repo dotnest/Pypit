@@ -34,7 +34,7 @@ class Item:
         self.name = item_info[1]
         self.notes = []
 
-        # adding info for gems
+        # self.gem_level and self.gem_quality for gems
         if self.rarity == "Gem":
             if item_info[3].startswith("Vaal"):
                 self.name = f"Vaal {self.name}"
@@ -78,6 +78,16 @@ class Item:
         else:
             self.links_str = None
             self.links = None
+
+        # self.enchant for helm enchants
+        if self.links and self.links <= 4:
+            for line in item_info:
+                if line.endswith(" (enchant)"):
+                    self.enchant = line[: -len(" (enchant)")]
+                    self.name = self.enchant
+                    break
+            else:
+                self.enchant = None
 
         # TODO?: tie in pricecheck to Item.price_one/stack
 
