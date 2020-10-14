@@ -36,10 +36,12 @@ class Item:
 
         # adding info for gems
         if self.rarity == "Gem":
+            if item_info[3].startswith("Vaal"):
+                self.name = f"Vaal {self.name}"
+
             self.gem_level = int(item_info[4].split()[1])
             for line in item_info:
                 if line.startswith("Quality: "):
-                    print(line.split("%")[0].split(": +"))
                     self.gem_quality = int(line.split("%")[0].split(": +")[1])
                     break
             else:
@@ -267,13 +269,12 @@ def pricecheck(item):
 
             # special check for gems for level, quality and corruption
             if item.rarity == "Gem":
-                print("encountered a gem".upper())
                 ninja_level, ninja_quality = get_ninja_gem_info(item)
 
                 if item_json["corrupted"]:
                     corrupted_str = "\ncorrupted"
                 else:
-                    corrupted_str = ""
+                    corrupted_str = "\n"
 
                 if (
                     ninja_level != item_json["gemLevel"]
