@@ -34,6 +34,20 @@ class Item:
         self.name = item_info[1]
         self.notes = []
 
+        # adding info for gems
+        if self.rarity == "Gem":
+            self.gem_level = int(item_info[4].split()[1])
+            for line in item_info:
+                if line.startswith("Quality: "):
+                    print(line.split("%")[0].split(": +"))
+                    self.gem_quality = int(line.split("%")[0].split(": +")[1])
+                    break
+            else:
+                self.gem_quality = 0
+        else:
+            self.gem_level = None
+            self.gem_quality = None
+
         # self.stack_size and self.stack_size_str, Int and String
         if "Stack Size:" in item_info[3]:
             self.stack_size_str = item_info[3].split(": ")[1].replace("\xa0", "")
@@ -168,6 +182,36 @@ def get_item_value(item, item_json):
         return item.stack_size * item_json["chaosValue"]
 
 
+def get_ninja_gem_info(item):
+    """Return gem's level and quality for poeninja's api."""
+
+    # getting poeninja's appropriate level
+    if item.name.startswith("Awakened"):
+        if item.gem_level < 5:
+            poeninja_level = 1
+        elif item.gem_level < 6:
+            poeninja_level = 5
+        elif item.gem_level >= 6:
+            poeninja_level = 6
+    else:
+        if item.gem_level < 20:
+            poeninja_level = 1
+        elif item.gem_level < 21:
+            poeninja_level = 20
+        elif item.gem_level >= 21:
+            poeninja_level = 21
+
+    # getting poeninja's appropriate quality
+    if item.gem_quality < 20:
+        poeninja_quality = 0
+    elif item.gem_quality < 23:
+        poeninja_quality = 20
+    elif item.gem_quality >= 23:
+        poeninja_quality = 23
+
+    return (poeninja_level, poeninja_quality)
+
+
 def press_ctrl_c():
     """Press ctrl-c and add a delay for game to copy item info in clipboard buffer."""
     keyboard.press(Key.ctrl_l)
@@ -178,7 +222,8 @@ def press_ctrl_c():
 
 
 def pricecheck(item):
-    """Return poeninja price for item"""
+    """Return poeninja price for item or None on fail."""
+    item_value = None
     pricecheck_time = time()  # tracking pricecheck performance
     # edge case for Chaos Orb
     if item.name == "Chaos Orb":
@@ -208,6 +253,7 @@ def pricecheck(item):
     # finding and displaying item value from api response
     for item_json in category_json["lines"]:
         if item.name == item_json[name_key]:
+            # special check for items that can be 5l / 6l
             if item.links:
                 if item.links < 5:
                     poeninja_links = 0
@@ -218,6 +264,27 @@ def pricecheck(item):
                         f"{item_json['links']}l - {item_json['chaosValue']}c"
                     )
                     continue
+
+            # special check for gems for level, quality and corruption
+            if item.rarity == "Gem":
+                print("encountered a gem".upper())
+                ninja_level, ninja_quality = get_ninja_gem_info(item)
+
+                if item_json["corrupted"]:
+                    corrupted_str = "\ncorrupted"
+                else:
+                    corrupted_str = ""
+
+                if (
+                    ninja_level != item_json["gemLevel"]
+                    or ninja_quality != item_json["gemQuality"]
+                    or item_json["corrupted"] != item.corrupted
+                ):
+                    item.notes.append(
+                        f"{item_json['gemLevel']}/{item_json['gemQuality']} - {item_json['chaosValue']}c{corrupted_str}"
+                    )
+                    continue
+
             logging.info(f"Hit {item.name}")
             item_value = get_item_value(item, item_json)
             if item_value is None:
