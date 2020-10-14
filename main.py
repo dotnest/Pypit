@@ -11,7 +11,7 @@ import window_name
 # maximum response age before it's fetched from poeninja again
 RESPONSE_TTL = 30
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(message)s")
 
 keyboard = Controller()
 requests_cache = dict()
@@ -25,7 +25,7 @@ class Item:
     def __init__(self, item_info):
         """Parse raw clipboard data."""
         if not item_info.startswith("Rarity: "):
-            print("invalid item data")
+            logging.info("invalid item data")
             self.name = None
             return None
         item_info = item_info.split("\r\n")
@@ -84,7 +84,7 @@ class Item:
 
 def quit_func():
     """Exit the script properly."""
-    print("Executed quit_func")
+    logging.info("Executed quit_func")
     listener.stop()
     quit()
 
@@ -93,7 +93,7 @@ def poe_in_focus():
     """Check if Path of Exile window is in focus."""
     win = window_name.get_active_window()
     if win != "Path of Exile":
-        print("PoE window isn't in focus")
+        logging.info("PoE window isn't in focus")
         return False
     return True
 
@@ -102,6 +102,7 @@ def to_hideout():
     """Press enter, input '/hideout', press enter."""
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
     if poe_in_focus():
+        logging.info("Returning to hideout...")
         keyboard.press(Key.enter)
         keyboard.release(Key.enter)
         # TODO: find a way to make this independent of keyboard layout
@@ -114,7 +115,7 @@ def to_hideout():
 def request_json(url):
     """Return json for url not older than RESPONSE_TTL."""
     if url not in requests_cache:
-        print("adding new entry in dict")
+        logging.info("adding new entry in dict")
         requests_cache[url] = {
             "time_fetched": datetime.now(),
             "response": requests.get(url).json(),
@@ -123,14 +124,14 @@ def request_json(url):
 
     response_age = datetime.now() - requests_cache[url]["time_fetched"]
     if response_age > timedelta(minutes=RESPONSE_TTL):
-        print("updating entry in dict")
+        logging.info("updating entry in dict")
         requests_cache[url] = {
             "time_fetched": datetime.now(),
             "response": requests.get(url).json(),
         }
         return requests_cache[url]["response"]
 
-    print("returning fresh enough response from dict")
+    logging.info("returning fresh enough response from dict")
     return requests_cache[url]["response"]
 
 
@@ -150,7 +151,7 @@ def get_item_value(item, item_json):
             json_query = key
             break
     else:
-        print("no such item found")
+        logging.info("no such item found")
         return None
 
     if json_query == "chaosEquivalent":
@@ -185,7 +186,7 @@ def pricecheck(item):
         for line in r["lines"]:
             if line["currencyTypeName"] == "Exalted Orb":
                 item_value = line["pay"]["value"]
-                print(
+                logging.info(
                     f"{item.stack_size} {format(item.stack_size * item_value, '.2f')}ex\n"
                 )
                 return item_value * item.stack_size
@@ -195,7 +196,7 @@ def pricecheck(item):
     # getting appropriate poe.ninja "page" api response
     url = get_url_for_item(item)
     if url is None:
-        print("unsupported item")
+        logging.info("unsupported item")
         return None
     category_json = request_json(url)
 
@@ -217,15 +218,17 @@ def pricecheck(item):
                         f"{item_json['links']}l - {item_json['chaosValue']}c"
                     )
                     continue
-            print("Hit", item.name)
+            logging.info(f"Hit {item.name}")
             item_value = get_item_value(item, item_json)
             if item_value is None:
-                print("couldn't find item value")
+                logging.info("couldn't find item value")
                 return None
-            print(f'{item.stack_size} {format(item_value, ".2f")}c')
+            logging.info(f'{item.stack_size} {format(item_value, ".2f")}c')
             break
 
-    print(f"Prichecheck finished in {format(time() - pricecheck_time, '.3f')}sec")
+    logging.info(
+        f"Prichecheck finished in {format(time() - pricecheck_time, '.3f')}sec"
+    )
     return item_value
 
 
@@ -234,7 +237,7 @@ def item_info_popup():
     start_time = time()  # for checking pricecheck performance
     pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
     if not poe_in_focus():
-        print("PoE window isn't in focus, returning...\n")
+        logging.info("PoE window isn't in focus, returning...\n")
         return -1
 
     # getting raw item info from the game
@@ -249,7 +252,7 @@ def item_info_popup():
             item.value_str = f'{format(item.value, ".2f")}c'
     else:
         item.value_str = "no price info"
-    print(item)
+    logging.debug(item)
 
     notes = "\n".join(item.notes)
     item_info = f"{item.name}\n{item.stack_size_str}\n{item.value_str}"
@@ -285,7 +288,7 @@ def item_info_popup():
         )
         notes_label.grid()
 
-    print(f'Took {format(time() - start_time, ".3f")}sec\n')
+    logging.info(f'Took {format(time() - start_time, ".3f")}sec\n')
     window.mainloop()
 
 
@@ -334,4 +337,5 @@ def on_release(key):
 
 
 with Listener(on_press=on_press, on_release=on_release) as listener:
+    logging.info("Listening for hotkeys...")
     listener.join()
