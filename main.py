@@ -8,7 +8,7 @@ import requests
 import name_to_apiurl as ntu
 import window_name
 
-# maximum response age before it's fetched from poeninja again
+# maximum response age before it's fetched from poeninja again in minutes
 RESPONSE_TTL = 30
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(message)s")
@@ -53,7 +53,6 @@ class Item:
         # self.stack_size and self.stack_size_str, Int and String
         if "Stack Size:" in item_info[3]:
             self.stack_size_str = item_info[3].split(": ")[1].replace("\xa0", "")
-            # self.stack_size_str = f"{self.stack_size_str}\n"
             self.stack_size = int(self.stack_size_str.split("/")[0])
         else:
             self.stack_size_str = ""

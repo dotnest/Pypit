@@ -1,6 +1,5 @@
 ref_*.py
-vk_key.py
-sample_items.py
+dev_*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
