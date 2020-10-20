@@ -33,6 +33,8 @@ class Item:
         self.rarity = item_info[0].split()[1]
         self.name = item_info[1]
         self.notes = []
+        self.value = None
+        self.value_str = None
 
         # self.gem_level and self.gem_quality for gems
         if self.rarity == "Gem":
@@ -87,6 +89,12 @@ class Item:
                     break
             else:
                 self.enchant = None
+
+        # self.map_tier for maps
+        if self.name in ntu.unique_maps:
+            self.map_tier = int(item_info[4].split(": ")[1])
+        else:
+            self.map_tier = None
 
         # TODO?: tie in pricecheck to Item.price_one/stack
 
@@ -295,6 +303,14 @@ def pricecheck(item):
                     )
                     continue
 
+            # special check for unique maps for map tier
+            if item.map_tier:
+                if item_json["mapTier"] != item.map_tier:
+                    item.notes.append(
+                        f"t{item_json['mapTier']} - {item_json['chaosValue']}c"
+                    )
+                    continue
+
             logging.info(f"Hit {item.name}")
             item_value = get_item_value(item, item_json)
             if item_value is None:
@@ -384,6 +400,7 @@ combination_to_function = {
     frozenset([KeyCode(vk=116)]): to_hideout,  # F5
     # TODO: Ctrl-f searches for mouseover item
     # TODO: F4 to leave party
+    # TODO: ctrl-mwheel to scroll through tabs (arrow keys)
 }
 
 # The currently pressed keys (initially empty)
