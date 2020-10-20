@@ -91,7 +91,14 @@ class Item:
                 self.enchant = None
 
         # self.map_tier for maps
-        if self.name in ntu.unique_maps:
+        if item_info[1].endswith(" Map"):
+            # special case for superior (quality) unid maps like shaper guardians
+            if item_info[1].startswith("Superior "):
+                self.name = item_info[1][9:]
+            self.map_tier = int(item_info[3].split(": ")[1])
+        elif item_info[2].endswith(" Map"):
+            # since base map name is offset by random rare map name
+            self.name = item_info[2]
             self.map_tier = int(item_info[4].split(": ")[1])
         else:
             self.map_tier = None
