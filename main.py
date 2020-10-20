@@ -98,7 +98,8 @@ class Item:
             self.map_tier = int(item_info[3].split(": ")[1])
         elif item_info[2].endswith(" Map"):
             # since base map name is offset by random rare map name
-            self.name = item_info[2]
+            if self.name not in ntu.unique_maps:
+                self.name = item_info[2]
             self.map_tier = int(item_info[4].split(": ")[1])
         else:
             self.map_tier = None
