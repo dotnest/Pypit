@@ -7,6 +7,8 @@ import logging
 import requests
 import name_to_apiurl as ntu
 import window_name
+from PIL import Image
+import pystray
 
 # maximum response age before it's fetched from poeninja again in minutes
 RESPONSE_TTL = 30
@@ -123,13 +125,6 @@ class Item:
         )
 
 
-def quit_func():
-    """Exit the script properly."""
-    logging.info("Executed quit_func")
-    listener.stop()
-    quit()
-
-
 def poe_in_focus():
     """Check if Path of Exile window is in focus."""
     win = window_name.get_active_window()
@@ -154,7 +149,7 @@ def to_hideout():
 
 
 def request_json(url):
-    """Return json for url not older than RESPONSE_TTL."""
+    """Return json for url not older than RESPONSE_TTL minutes."""
     if url not in requests_cache:
         logging.info("adding new entry in dict")
         requests_cache[url] = {
@@ -400,10 +395,40 @@ def item_info_popup():
     window.mainloop()
 
 
+###################
+# pystray functions
+###################
+
+
+def exit_action(icon):
+    """Exit the script properly."""
+    logging.info("Executed quit_func")
+    listener.stop()
+    icon.visible = False
+    icon.stop()
+
+
+def setup(icon):
+    icon.visible = True
+
+    logging.info("Listening for hotkeys...")
+    listener.join()
+
+
+def init_icon():
+    icon = pystray.Icon("pypit")
+    icon.menu = pystray.Menu(
+        pystray.MenuItem("Exit", lambda: exit_action(icon)),
+    )
+    icon.icon = Image.open("dev_icon.ico")
+    icon.title = "Pypit"
+
+    icon.run(setup)
+
+
 # Create a mapping of keys to function (use frozenset as sets/lists are not hashable - so they can't be used as keys)
 # Note the missing `()` after quit_func and clipboard_to_tooltip as want to pass the function, not the return value of the function
 combination_to_function = {
-    frozenset([Key.ctrl_l, Key.shift, KeyCode(vk=81)]): quit_func,  # ctrl + shift + q
     frozenset([Key.ctrl_l, KeyCode(vk=68)]): item_info_popup,  # left ctrl + d
     frozenset([KeyCode(vk=116)]): to_hideout,  # F5
     # TODO: Ctrl-f searches for mouseover item
@@ -445,6 +470,6 @@ def on_release(key):
         pressed_vks.remove(vk)  # Remove it from the set of currently pressed keys
 
 
-with Listener(on_press=on_press, on_release=on_release) as listener:
-    logging.info("Listening for hotkeys...")
-    listener.join()
+if __name__ == "__main__":
+    with Listener(on_press=on_press, on_release=on_release) as listener:
+        init_icon()
