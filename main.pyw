@@ -420,7 +420,7 @@ def init_icon():
     icon.menu = pystray.Menu(
         pystray.MenuItem("Exit", lambda: exit_action(icon)),
     )
-    icon.icon = Image.open("dev_icon.ico")
+    icon.icon = Image.open("icon.ico")
     icon.title = "Pypit"
 
     icon.run(setup)
