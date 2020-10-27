@@ -1,4 +1,4 @@
-from pynput.keyboard import Key, KeyCode, Listener, Controller
+from pynput.keyboard import Key, KeyCode, Listener, Controller, GlobalHotKeys
 import pyperclip
 import tkinter as tk
 from time import sleep, time
@@ -136,7 +136,6 @@ def poe_in_focus():
 
 def to_hideout():
     """Press enter, input '/hideout', press enter."""
-    pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
     if poe_in_focus():
         logging.info("Returning to hideout...")
         keyboard.press(Key.enter)
@@ -331,7 +330,6 @@ def pricecheck(item):
 def item_info_popup():
     """Show a window with item info."""
     start_time = time()  # for checking total performance
-    pressed_vks.clear()  # clearing pressed keys set to prevent weirdness, "There must be a better way!" (c)
     if not poe_in_focus():
         logging.info("PoE window isn't in focus, returning...\n")
         return -1
@@ -425,51 +423,13 @@ def init_icon():
 
     icon.run(setup)
 
-
-# Create a mapping of keys to function (use frozenset as sets/lists are not hashable - so they can't be used as keys)
-# Note the missing `()` after quit_func and clipboard_to_tooltip as want to pass the function, not the return value of the function
-combination_to_function = {
-    frozenset([Key.ctrl_l, KeyCode(vk=68)]): item_info_popup,  # left ctrl + d
-    frozenset([KeyCode(vk=116)]): to_hideout,  # F5
-    # TODO: Ctrl-f searches for mouseover item
-    # TODO: F4 to leave party
-    # TODO: ctrl-mwheel to scroll through tabs (arrow keys)
-}
-
-# The currently pressed keys (initially empty)
-pressed_vks = set()
+# TODO: Ctrl-f searches for mouseover item
+# TODO: F4 to leave party
+# TODO: ctrl-mwheel to scroll through tabs (arrow keys)
 
 
-def get_vk(key):
-    """
-    Get the virtual key code from a key.
-    These are used so case/shift modifications are ignored.
-    """
-    return key.vk if hasattr(key, "vk") else key.value.vk
-
-
-def is_combination_pressed(combination):
-    """Check if a combination is satisfied using the keys pressed in pressed_vks"""
-    return all([get_vk(key) in pressed_vks for key in combination])
-
-
-def on_press(key):
-    """When a key is pressed"""
-    vk = get_vk(key)  # Get the key's vk
-    pressed_vks.add(vk)  # Add it to the set of currently pressed keys
-
-    for combination in combination_to_function:
-        if is_combination_pressed(combination):
-            combination_to_function[combination]()
-
-
-def on_release(key):
-    """When a key is released"""
-    vk = get_vk(key)  # Get the key's vk
-    if vk in pressed_vks:
-        pressed_vks.remove(vk)  # Remove it from the set of currently pressed keys
-
+hotkey_dict = {"<ctrl>+d": item_info_popup, "<f5>": to_hideout}
 
 if __name__ == "__main__":
-    with Listener(on_press=on_press, on_release=on_release) as listener:
+    with GlobalHotKeys(hotkey_dict) as listener:
         init_icon()
