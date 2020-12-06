@@ -30,7 +30,11 @@ class Item:
             logging.info("invalid item data")
             self.name = None
             return None
-        item_info = item_info.split("\r\n")
+        if "\r\n" in item_info:
+            split_on = "\r\n"
+        else:
+            split_on = "\n"
+        item_info = item_info.split(split_on)
         self.item_info = item_info
         self.rarity = item_info[0].split()[1]
         self.name = item_info[1]
@@ -422,6 +426,7 @@ def init_icon():
     icon.title = "Pypit"
 
     icon.run(setup)
+
 
 # TODO: Ctrl-f searches for mouseover item
 # TODO: F4 to leave party

@@ -1,5 +1,5 @@
-# https://stackoverflow.com/revisions/36419702/7
 #!/usr/bin/env python
+# https://stackoverflow.com/revisions/36419702/7
 
 """Find the currently active window."""
 
@@ -22,14 +22,39 @@ def get_active_window():
     string :
         Name of the currently active window.
     """
+    import sys
 
     active_window_name = None
-    if sys.platform in ["Windows", "win32", "cygwin"]:
+    if sys.platform in ["linux", "linux2"]:
+        # edited to my own solution
+        # check the link in beginning of file if you can't make it work
+        from Xlib import display, X
+
+        display = display.Display()
+        root = display.screen().root
+        windowID = root.get_full_property(
+            display.intern_atom("_NET_ACTIVE_WINDOW"), X.AnyPropertyType
+        ).value[0]
+        window = display.create_resource_object("window", windowID)
+        active_window_name = window.get_wm_class()[0].lower()
+
+        # since it's a hard check against "Path of Exile" in main script
+        if "pathofexile" in active_window_name:
+            active_window_name = "Path of Exile"
+
+    elif sys.platform in ["Windows", "win32", "cygwin"]:
         # http://stackoverflow.com/a/608814/562769
         import win32gui
 
         window = win32gui.GetForegroundWindow()
         active_window_name = win32gui.GetWindowText(window)
+    elif sys.platform in ["Mac", "darwin", "os2", "os2emx"]:
+        # http://stackoverflow.com/a/373310/562769
+        from AppKit import NSWorkspace
+
+        active_window_name = NSWorkspace.sharedWorkspace().activeApplication()[
+            "NSApplicationName"
+        ]
     else:
         print(
             "sys.platform={platform} is unknown. Please report.".format(
