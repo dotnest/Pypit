@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from pynput.keyboard import Key, KeyCode, Listener, Controller, GlobalHotKeys
 import pyperclip
 import tkinter as tk
@@ -30,11 +31,14 @@ class Item:
             logging.info("invalid item data")
             self.name = None
             return None
+
+        # split raw string in a list of individual lines
         if "\r\n" in item_info:
             split_on = "\r\n"
         else:
             split_on = "\n"
         item_info = item_info.split(split_on)
+
         self.item_info = item_info
         self.rarity = item_info[0].split()[1]
         self.name = item_info[1]
@@ -60,7 +64,9 @@ class Item:
 
         # self.stack_size and self.stack_size_str, Int and String
         if "Stack Size:" in item_info[3]:
-            self.stack_size_str = item_info[3].split(": ")[1].replace("\xa0", "")
+            self.stack_size_str = (
+                item_info[3].split(": ")[1].replace("\xa0", "").replace(",", "")
+            )
             self.stack_size = int(self.stack_size_str.split("/")[0])
         else:
             self.stack_size_str = ""
@@ -132,10 +138,12 @@ class Item:
 def poe_in_focus():
     """Check if Path of Exile window is in focus."""
     win = window_name.get_active_window()
-    if win != "Path of Exile":
-        logging.info("PoE window isn't in focus")
+
+    if "pathofexile" in win:
+        return True
+    else:
+        logging.info(f"{datetime.now()} PoE window isn't in focus")
         return False
-    return True
 
 
 def to_hideout():
@@ -250,6 +258,7 @@ def pricecheck(item):
     """Return poeninja price for item or None on fail."""
     item_value = None
     pricecheck_time = time()  # tracking pricecheck performance
+
     # edge case for Chaos Orb
     if item.name == "Chaos Orb":
         r = request_json(ntu.name_to_URL_dict[ntu.currency])

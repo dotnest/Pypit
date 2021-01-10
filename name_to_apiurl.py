@@ -8,11 +8,11 @@ LEAGUE = "Heist"
 API_BASE_URL = "https://poe.ninja/api/data/"
 
 
-def currency_overview_url(currency_type):
+def get_currency_url(currency_type):
     return f"{API_BASE_URL}currencyoverview?league={LEAGUE}&type={currency_type}&language=en"
 
 
-def item_overview_url(item_type):
+def get_item_url(item_type):
     return f"{API_BASE_URL}itemoverview?league={LEAGUE}&type={item_type}&language=en"
 
 
@@ -8279,27 +8279,27 @@ get_value_dict = {
 
 
 name_to_URL_dict = {
-    currency: currency_overview_url("Currency"),
-    fragments: currency_overview_url("Fragment"),
-    delirium_orbs: item_overview_url("DeliriumOrb"),
-    watchstones: item_overview_url("Watchstone"),
-    oils: item_overview_url("Oil"),
-    incubators: item_overview_url("Incubator"),
-    scarabs: item_overview_url("Scarab"),
-    fossils: item_overview_url("Fossil"),
-    resonators: item_overview_url("Resonator"),
-    essences: item_overview_url("Essence"),
-    divination_cards: item_overview_url("DivinationCard"),
-    prophecies: item_overview_url("Prophecy"),
-    unique_jewels: item_overview_url("UniqueJewel"),
-    unique_flasks: item_overview_url("UniqueFlask"),
-    unique_weapons: item_overview_url("UniqueWeapon"),
-    unique_armours: item_overview_url("UniqueArmour"),
-    unique_accessories: item_overview_url("UniqueAccessory"),
-    vials: item_overview_url("Vial"),
-    beasts: item_overview_url("Beast"),
-    skill_gems: item_overview_url("SkillGem"),
-    helm_enchants: item_overview_url("HelmetEnchant"),
-    unique_maps: item_overview_url("UniqueMap"),
-    maps: item_overview_url("Map"),
+    currency: get_currency_url("Currency"),
+    fragments: get_currency_url("Fragment"),
+    delirium_orbs: get_item_url("DeliriumOrb"),
+    watchstones: get_item_url("Watchstone"),
+    oils: get_item_url("Oil"),
+    incubators: get_item_url("Incubator"),
+    scarabs: get_item_url("Scarab"),
+    fossils: get_item_url("Fossil"),
+    resonators: get_item_url("Resonator"),
+    essences: get_item_url("Essence"),
+    divination_cards: get_item_url("DivinationCard"),
+    prophecies: get_item_url("Prophecy"),
+    unique_jewels: get_item_url("UniqueJewel"),
+    unique_flasks: get_item_url("UniqueFlask"),
+    unique_weapons: get_item_url("UniqueWeapon"),
+    unique_armours: get_item_url("UniqueArmour"),
+    unique_accessories: get_item_url("UniqueAccessory"),
+    vials: get_item_url("Vial"),
+    beasts: get_item_url("Beast"),
+    skill_gems: get_item_url("SkillGem"),
+    helm_enchants: get_item_url("HelmetEnchant"),
+    unique_maps: get_item_url("UniqueMap"),
+    maps: get_item_url("Map"),
 }

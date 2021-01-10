@@ -1,11 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 # https://stackoverflow.com/revisions/36419702/7
 
-"""Find the currently active window."""
-
-import logging
 import sys
 
+# import logging
 # logging.basicConfig(
 #     format="%(asctime)s %(levelname)s %(message)s",
 #     level=logging.DEBUG,
@@ -22,7 +20,6 @@ def get_active_window():
     string :
         Name of the currently active window.
     """
-    import sys
 
     active_window_name = None
     if sys.platform in ["linux", "linux2"]:
@@ -37,10 +34,6 @@ def get_active_window():
         ).value[0]
         window = display.create_resource_object("window", windowID)
         active_window_name = window.get_wm_class()[0].lower()
-
-        # since it's a hard check against "Path of Exile" in main script
-        if "pathofexile" in active_window_name:
-            active_window_name = "Path of Exile"
 
     elif sys.platform in ["Windows", "win32", "cygwin"]:
         # http://stackoverflow.com/a/608814/562769
@@ -62,6 +55,7 @@ def get_active_window():
             )
         )
         print(sys.version)
+
     return active_window_name
 
 
