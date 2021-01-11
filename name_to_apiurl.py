@@ -1,19 +1,39 @@
-# possible leagues:
-# "Heist"
-# "Hardcore%20Heist"
-# "Standard"
-# "Hardcore"
+import requests
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(message)s")
 
 LEAGUE = "Heist"
-API_BASE_URL = "https://poe.ninja/api/data/"
+POENINJA_API_BASE_URL = "https://poe.ninja/api/data/"
+POE_LEAGUES_URL = "https://www.pathofexile.com/api/trade/data/leagues"
+
+
+def get_current_leagues():
+    leagues_response = requests.get(POE_LEAGUES_URL).json()["result"]
+
+    for league in leagues_response:
+        league["http"] = league["id"].replace(" ", "%20")
+
+        # since for now 'id' and 'text' are the same - delete id
+        # might be worth checking in future
+        if league["id"] == league["text"]:
+            del league["id"]
+            logging.info(league)
+        else:
+            logging.info(
+                "'id' and 'text' values differ for this league in api response:"
+            )
+            logging.info(league)
+
+    return leagues_response
 
 
 def get_currency_url(currency_type):
-    return f"{API_BASE_URL}currencyoverview?league={LEAGUE}&type={currency_type}&language=en"
+    return f"{POENINJA_API_BASE_URL}currencyoverview?league={LEAGUE}&type={currency_type}&language=en"
 
 
 def get_item_url(item_type):
-    return f"{API_BASE_URL}itemoverview?league={LEAGUE}&type={item_type}&language=en"
+    return f"{POENINJA_API_BASE_URL}itemoverview?league={LEAGUE}&type={item_type}&language=en"
 
 
 currency = frozenset(

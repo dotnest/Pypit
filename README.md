@@ -9,13 +9,14 @@ price info is taken from [poe.ninja](https://poe.ninja/)
 
 ## Requirements
 - [Python](https://www.python.org/downloads/)
+- Path of Exile must be in windowed or borderless windowed mode
 
 ## Installation
 - [Download](https://github.com/dotnest/Pypit/archive/dev.zip)/clone this repository  
 keep in mind that this will download a dev branch for now
 - Extract it
 - Install required libraries for python  
-`pip install -r requirements.txt`  
+`$ pip install -r requirements.txt`  
 Windows users can try provided `requirements_install.bat`
 
 ## Usage
@@ -24,9 +25,11 @@ you should see pink and black letter "P" appear in your taskbar if all went well
 - When in game:  
 press **Ctrl-d** to pricecheck an item under your cursor  
 press **F5** to teleport to hideout
-- Windows users might encounter a *feature* due to how `pynput` works for now  
-if Pypit pricechecks items when only **Ctrl** is pressed - it seems to be in a state where it thinks that **d** is pressed down too  
-you can use it for your convenience and look up prices with just Ctrl, in that case press **d** when you're done to "unstick" it  
+
+You can close the popup by pressing Ctrl, Esc or by clicking the game window/losing focus on popup
+
+Windows users might encounter a *feature* due to how `pynput` works for now  
+If Pypit pricechecks items when only **Ctrl** is pressed - it seems to be in a state where it thinks that **d** is pressed down too. You can use it for your convenience and look up prices with just Ctrl, in that case **press d** when you're done to "unstick" it  
 
 ## Linux
 
