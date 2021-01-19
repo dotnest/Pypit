@@ -3,7 +3,7 @@ import logging
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(message)s")
 
-LEAGUE = "Heist"
+LEAGUE = "Ritual"
 POENINJA_API_BASE_URL = "https://poe.ninja/api/data/"
 POE_LEAGUES_URL = "https://www.pathofexile.com/api/trade/data/leagues"
 
