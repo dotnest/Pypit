@@ -6,7 +6,7 @@ from time import sleep, time
 from datetime import datetime, timedelta
 import logging
 import requests
-import name_to_apiurl as ntu
+import api
 import window_name
 from PIL import Image
 import pystray
@@ -110,7 +110,7 @@ class Item:
             self.map_tier = int(item_info[3].split(": ")[1])
         elif item_info[2].endswith(" Map"):
             # since base map name is offset by random rare map name
-            if self.name not in ntu.unique_maps:
+            if self.name not in api.unique_maps:
                 self.name = item_info[2]
             self.map_tier = int(item_info[4].split(": ")[1])
         else:
@@ -184,7 +184,7 @@ def request_json(url):
 
 def get_url_for_item(item):
     """Return an appropriate api url to call for an item or None if there is not one."""
-    for key, value in ntu.name_to_URL_dict.items():
+    for key, value in api.name_to_URL_dict.items():
         if item.name in key:
             return value
     else:
@@ -193,9 +193,9 @@ def get_url_for_item(item):
 
 def get_item_value(item, item_json):
     """Return total item value from item_json or None on failure."""
-    for items in ntu.get_value_dict:
+    for items in api.get_value_dict:
         if item.name in items:
-            json_query = ntu.get_value_dict[items]
+            json_query = api.get_value_dict[items]
             break
     else:
         logging.info("no such item found")
@@ -261,7 +261,7 @@ def pricecheck(item):
 
     # edge case for Chaos Orb
     if item.name == "Chaos Orb":
-        r = request_json(ntu.name_to_URL_dict[ntu.currency])
+        r = request_json(api.name_to_URL_dict[api.currency])
         for line in r["lines"]:
             if line["currencyTypeName"] == "Exalted Orb":
                 item_value = line["pay"]["value"]
@@ -279,7 +279,7 @@ def pricecheck(item):
         return None
     category_json = request_json(url)
 
-    if item.name in ntu.currency or item.name in ntu.fragments:
+    if item.name in api.currency or item.name in api.fragments:
         name_key = "currencyTypeName"
     else:
         name_key = "name"
