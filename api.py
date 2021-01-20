@@ -7,10 +7,14 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(message)s")
 LEAGUE = config.load()["league"]
 POENINJA_API_BASE_URL = "https://poe.ninja/api/data/"
 POE_LEAGUES_URL = "https://www.pathofexile.com/api/trade/data/leagues"
+# headers required to get a response
+HEADERS = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36"
+}
 
 
 def get_current_leagues():
-    leagues_response = requests.get(POE_LEAGUES_URL).json()["result"]
+    leagues_response = requests.get(POE_LEAGUES_URL, headers=HEADERS).json()["result"]
 
     for league in leagues_response:
         league["http"] = league["id"].replace(" ", "%20")

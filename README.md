@@ -29,7 +29,7 @@ press **F5** to teleport to hideout
 You can close the popup by pressing Ctrl, Esc or by clicking the game window/losing focus on popup
 
 Windows users might encounter a *feature* due to how `pynput` works for now  
-If Pypit pricechecks items when only **Ctrl** is pressed - it seems to be in a state where it thinks that **d** is pressed down too. You can use it for your convenience and look up prices with just Ctrl, in that case **press d** when you're done to "unstick" it  
+If Pypit pricechecks items when only **Ctrl** or **d** is pressed - it seems to be in a state where it thinks that the other button is pressed down too. You can use it for your convenience and look up prices with just Ctrl/d, in that case **press the other button** when you're done to "unstick" it  
 
 ## Linux
 

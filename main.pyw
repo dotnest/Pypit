@@ -374,6 +374,7 @@ def item_info_popup():
     window.bind("<FocusOut>", lambda e: window.destroy())  # destroy on lose focus
     window.bind("<Escape>", lambda e: window.destroy())  # destroy on Escape
     window.bind("<Control_L>", lambda e: window.destroy())  # destroy on lCtrl
+    window.bind("d", lambda e: window.destroy())  # destroy on 'd'
 
     item_frame = tk.Frame(window, bg="#1e1e1e")
     item_frame.grid()
