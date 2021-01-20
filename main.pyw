@@ -10,6 +10,7 @@ import api
 import window_name
 from PIL import Image
 import pystray
+import config
 
 # maximum response age before it's fetched from poeninja again in minutes
 RESPONSE_TTL = 30
@@ -443,6 +444,7 @@ def init_icon():
 
 
 hotkey_dict = {"<ctrl>+d": item_info_popup, "<f5>": to_hideout}
+config_dict = config.load()
 
 if __name__ == "__main__":
     with GlobalHotKeys(hotkey_dict) as listener:
