@@ -18,7 +18,7 @@ RESPONSE_TTL = 30
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(message)s")
 
 keyboard = Controller()
-requests_cache = dict()
+requests_cache = {}
 
 # TODO: tests with mock api, Item.price(sample.headhunter) == 4950c -> True
 # TODO: see if different .gitignore files are possible for dev and
@@ -140,11 +140,14 @@ def poe_in_focus():
     """Check if Path of Exile window is in focus."""
     win = window_name.get_active_window()
 
-    if "pathofexile" in win or "Path of Exile" in win:
-        return True
-    else:
-        logging.info(f"{datetime.now()} PoE window isn't in focus")
-        return False
+    acceptable_names = ["pathofexile", "Path of Exile"]
+
+    for name in acceptable_names:
+        if name in win:
+            return True
+
+    logging.info(f"{datetime.now()} PoE window isn't in focus")
+    return False
 
 
 #################
@@ -204,9 +207,9 @@ def request_json_for_url(url):
 
 def get_url_for_item(item):
     """Return an appropriate api url to call for an item or None if there is not one."""
-    for key, value in api.name_to_URL_dict.items():
-        if item.name in key:
-            return value
+    for items, url in api.name_to_URL_dict.items():
+        if item.name in items:
+            return url
     else:
         return None
 
@@ -281,6 +284,7 @@ def pricecheck(item):
                 )
                 return item_value * item.stack_size
         else:
+            logging.info("couldn't find Exalted Orb in poeninja's response")
             return None
 
     # getting appropriate poe.ninja "page" api response
@@ -297,53 +301,54 @@ def pricecheck(item):
 
     # finding and displaying item value from api response
     for item_json in category_json["lines"]:
-        if item.name == item_json[name_key]:
-            # special check for items that can be 5l / 6l
-            if item.links:
-                if item.links < 5:
-                    poeninja_links = 0
-                else:
-                    poeninja_links = item.links
-                if item_json["links"] != poeninja_links:
-                    item.notes.append(
-                        f"{item_json['links']}l - {item_json['chaosValue']}c"
-                    )
-                    continue
+        # skip unmatched items
+        if item.name != item_json[name_key]:
+            continue
 
-            # special check for gems for level, quality and corruption
-            if item.rarity == "Gem":
-                ninja_level, ninja_quality = get_ninja_gem_info(item)
+        # special check for items that can be 5l / 6l
+        if item.links:
+            if item.links < 5:
+                poeninja_links = 0
+            else:
+                poeninja_links = item.links
+            if item_json["links"] != poeninja_links:
+                item.notes.append(f"{item_json['links']}l - {item_json['chaosValue']}c")
+                continue
 
-                if item_json["corrupted"]:
-                    corrupted_str = "\ncorrupted"
-                else:
-                    corrupted_str = "\n"
+        # special check for gems for level, quality and corruption
+        if item.rarity == "Gem":
+            ninja_level, ninja_quality = get_ninja_gem_info(item)
 
-                if (
-                    ninja_level != item_json["gemLevel"]
-                    or ninja_quality != item_json["gemQuality"]
-                    or item_json["corrupted"] != item.corrupted
-                ):
-                    item.notes.append(
-                        f"{item_json['gemLevel']}/{item_json['gemQuality']} - {item_json['chaosValue']}c{corrupted_str}"
-                    )
-                    continue
+            if item_json["corrupted"]:
+                corrupted_str = "\ncorrupted"
+            else:
+                corrupted_str = "\n"
 
-            # special check for unique maps for map tier
-            if item.map_tier:
-                if item_json["mapTier"] != item.map_tier:
-                    item.notes.append(
-                        f"t{item_json['mapTier']} - {item_json['chaosValue']}c"
-                    )
-                    continue
+            if (
+                ninja_level != item_json["gemLevel"]
+                or ninja_quality != item_json["gemQuality"]
+                or item_json["corrupted"] != item.corrupted
+            ):
+                item.notes.append(
+                    f"{item_json['gemLevel']}/{item_json['gemQuality']} - {item_json['chaosValue']}c{corrupted_str}"
+                )
+                continue
 
-            logging.info(f"Hit {item.name}")
-            item_value = get_item_value(item, item_json)
-            if item_value is None:
-                logging.info("couldn't find item value")
-                return None
-            logging.info(f'{item.stack_size} {format(item_value, ".2f")}c')
-            break
+        # special check for unique maps for map tier
+        if item.map_tier:
+            if item_json["mapTier"] != item.map_tier:
+                item.notes.append(
+                    f"t{item_json['mapTier']} - {item_json['chaosValue']}c"
+                )
+                continue
+
+        logging.info(f"Hit {item.name}")
+        item_value = get_item_value(item, item_json)
+        if item_value is None:
+            logging.info("couldn't find item value")
+            return None
+        logging.info(f'{item.stack_size} {format(item_value, ".2f")}c')
+        break
 
     logging.info(
         f"Prichecheck finished in {format(time() - pricecheck_time, '.3f')}sec"
