@@ -147,6 +147,11 @@ def poe_in_focus():
         return False
 
 
+#################
+# input functions
+#################
+
+
 def to_hideout():
     """Press enter, input '/hideout', press enter."""
     if poe_in_focus():
@@ -160,7 +165,21 @@ def to_hideout():
         sleep(1)  # lord forgive me for this temporary solution while i'm learning stuff
 
 
-def request_json(url):
+def press_ctrl_c():
+    """Press ctrl-c and add a delay for game to copy item info in clipboard buffer."""
+    keyboard.press(Key.ctrl_l)
+    keyboard.press(KeyCode(vk=67))
+    keyboard.release(Key.ctrl_l)
+    keyboard.release(KeyCode(vk=67))
+    sleep(0.03)
+
+
+################
+# item functions
+################
+
+
+def request_json_for_url(url):
     """Return json for url not older than RESPONSE_TTL minutes."""
     if url not in requests_cache:
         logging.info("adding new entry in dict")
@@ -246,15 +265,6 @@ def get_ninja_gem_info(item):
     return (poeninja_level, poeninja_quality)
 
 
-def press_ctrl_c():
-    """Press ctrl-c and add a delay for game to copy item info in clipboard buffer."""
-    keyboard.press(Key.ctrl_l)
-    keyboard.press(KeyCode(vk=67))
-    keyboard.release(Key.ctrl_l)
-    keyboard.release(KeyCode(vk=67))
-    sleep(0.03)
-
-
 def pricecheck(item):
     """Return poeninja price for item or None on fail."""
     item_value = None
@@ -262,7 +272,7 @@ def pricecheck(item):
 
     # edge case for Chaos Orb
     if item.name == "Chaos Orb":
-        r = request_json(api.name_to_URL_dict[api.currency])
+        r = request_json_for_url(api.name_to_URL_dict[api.currency])
         for line in r["lines"]:
             if line["currencyTypeName"] == "Exalted Orb":
                 item_value = line["pay"]["value"]
@@ -278,7 +288,7 @@ def pricecheck(item):
     if url is None:
         logging.info("unsupported item")
         return None
-    category_json = request_json(url)
+    category_json = request_json_for_url(url)
 
     if item.name in api.currency or item.name in api.fragments:
         name_key = "currencyTypeName"
