@@ -428,6 +428,103 @@ def item_info_popup():
 ###################
 
 
+def edit_config_popup(icon):
+    """Open a window to edit config."""
+    padx = 4
+    pady = 6
+
+    # creating popup window
+    window = tk.Tk()
+    window.title("Pypit config")
+    window.after(1, lambda: window.focus_force())  # focus on create
+    window.bind("<Escape>", lambda e: window.destroy())  # destroy on Escape
+
+    config_frame = tk.Frame(window, bg="#1e1e1e")
+    config_frame.grid()
+
+    # character label
+    char_label = tk.Label(
+        config_frame,
+        text="Character name: ",
+        bd=5,
+        bg="#1e1e1e",
+        fg="#a4b5b0",
+        font=("Helvetica", 12),
+    )
+    char_label.grid(
+        row=0,
+        column=0,
+        padx=padx,
+        pady=pady,
+    )
+    # characted name input field
+    name_field = tk.Entry(
+        config_frame,
+        bd=5,
+        bg="#1e1e1e",
+        fg="#a4b5b0",
+        font=("Helvetica", 12),
+    )
+    # default value is taken from config dict
+    name_field.insert(0, config_dict["character"])
+    name_field.grid(
+        row=0,
+        column=1,
+        padx=padx,
+        pady=pady,
+    )
+
+    # league label
+    league_label = tk.Label(
+        config_frame,
+        text="League: ",
+        bd=5,
+        bg="#1e1e1e",
+        fg="#a4b5b0",
+        font=("Helvetica", 12),
+    )
+    league_label.grid(
+        row=1,
+        column=0,
+        padx=padx,
+        pady=pady,
+    )
+
+    # Create a Tkinter variable
+    tkvar = tk.StringVar(window)
+
+    # List with options
+    leagues = api.get_current_leagues()
+    tkvar.set(config_dict["league"])  # set the default option
+
+    popupMenu = tk.OptionMenu(config_frame, tkvar, *leagues)
+    popupMenu.grid(row=1, column=1)
+
+    # on change dropdown value
+    def change_dropdown(*args):
+        logging.info(f"selecter league: {tkvar.get()}\n")
+
+    # link function to change dropdown
+    tkvar.trace("w", change_dropdown)
+
+    # helper function for save button
+    def update_config():
+        logging.info("writing config")
+        logging.info(f"character name: {name_field.get()}")
+        logging.info(f"league: {tkvar.get()}\n")
+        config_dict["character"] = name_field.get()
+        config_dict["league"] = tkvar.get().replace(" ", "%20")
+        config.write(config_dict)
+
+    # save button
+    tk.Button(config_frame, text="Save", command=update_config).grid(
+        row=2, column=1, sticky=tk.W, pady=pady
+    )
+
+    # opening popup window
+    window.mainloop()
+
+
 def exit_action(icon):
     """Exit the script properly."""
     logging.info("Executed quit_func")
@@ -446,6 +543,7 @@ def setup(icon):
 def init_icon():
     icon = pystray.Icon("pypit")
     icon.menu = pystray.Menu(
+        pystray.MenuItem("Config", lambda: edit_config_popup(icon)),
         pystray.MenuItem("Exit", lambda: exit_action(icon)),
     )
     icon.icon = Image.open("icon.ico")

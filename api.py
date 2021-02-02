@@ -16,19 +16,7 @@ HEADERS = {
 def get_current_leagues():
     leagues_response = requests.get(POE_LEAGUES_URL, headers=HEADERS).json()["result"]
 
-    for league in leagues_response:
-        league["http"] = league["id"].replace(" ", "%20")
-
-        # since for now 'id' and 'text' are the same - delete id
-        # might be worth checking in future
-        if league["id"] == league["text"]:
-            del league["id"]
-            logging.info(league)
-        else:
-            logging.info(
-                "'id' and 'text' values differ for this league in api response:"
-            )
-            logging.info(league)
+    leagues_response = [league["id"] for league in leagues_response]
 
     return leagues_response
 
