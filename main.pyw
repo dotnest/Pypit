@@ -140,13 +140,13 @@ def poe_in_focus():
     """Check if Path of Exile window is in focus."""
     win = window_name.get_active_window()
 
-    acceptable_names = ["pathofexile", "Path of Exile"]
+    acceptable_names = ["pathofexile", "Path of Exile", "steam_app_238960"]
 
     for name in acceptable_names:
         if name in win:
             return True
 
-    logging.info(f"{datetime.now()} PoE window isn't in focus")
+    logging.info(f'{datetime.now()} PoE window isn\'t in focus - "{win}"')
     return False
 
 
