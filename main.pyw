@@ -379,8 +379,12 @@ def item_info_popup():
         item.value_str = "no price info"
     logging.debug(item)
 
-    notes = "\n".join(item.notes)
-    item_info = f"{item.name}\n{item.stack_size_str}\n{item.value_str}"
+    if item.value:
+        notes = "\n".join(item.notes)
+        item_info = f"{item.name}\n{item.stack_size_str}\n{item.value_str}"
+    else:
+        notes = None
+        item_info = "something went wrong"
 
     # creating popup window
     window = tk.Tk()
@@ -406,7 +410,7 @@ def item_info_popup():
     item_label.grid()
 
     # secondary label if there are additional item notes
-    if item.notes:
+    if notes:
         notes_label = tk.Label(
             item_frame,
             text=notes,
