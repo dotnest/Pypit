@@ -11,6 +11,7 @@ import window_name
 from PIL import Image
 import pystray
 import config
+import webbrowser
 
 # maximum response age before it's fetched from poeninja again in minutes
 RESPONSE_TTL = 30
@@ -358,6 +359,12 @@ def pricecheck(item):
 
 def item_info_popup():
     """Show a window with item info."""
+
+    def open_poeninja_page(item):
+        url = api.get_poeninja_page_url(item)
+        if url:
+            webbrowser.open(api.get_poeninja_page_url(item), new=2)
+
     start_time = time()  # for checking total performance
     if not poe_in_focus():
         logging.info("PoE window isn't in focus, returning...\n")
@@ -408,6 +415,14 @@ def item_info_popup():
         font=("Helvetica", 14),
     )
     item_label.grid()
+
+    # open poeninja page for item button
+    if api.get_poeninja_page_url(item):
+        tk.Button(
+            item_frame,
+            text="Open on poe.ninja",
+            command=lambda: open_poeninja_page(item),
+        ).grid()
 
     # secondary label if there are additional item notes
     if notes:

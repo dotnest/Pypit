@@ -30,6 +30,21 @@ def get_item_url(item_type):
     return f"{POENINJA_API_BASE_URL}itemoverview?league={LEAGUE}&type={item_type}&language=en"
 
 
+def get_poeninja_page_url(item):
+    url_name = item.name.lower().replace(" ", "-").replace("'", "")
+    prefix = None
+
+    for category in poeninja_category:
+        if item.name in category:
+            prefix = poeninja_category[category]
+            break
+
+    if prefix:
+        return f"https://poe.ninja/{LEAGUE.lower()}/{prefix}/{url_name}"
+    else:
+        return None
+
+
 poeninja_category = {
     currency: "currency",
     fragments: "fragments",
