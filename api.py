@@ -38,12 +38,27 @@ def get_poeninja_page_url(item):
         if item.name in category:
             prefix = poeninja_category[category]
             break
-
-    if prefix:
-        return f"https://poe.ninja/{LEAGUE.lower()}/{prefix}/{url_name}"
     else:
         return None
 
+    ninja_league = LEAGUE.lower()
+    if ninja_league not in ["hardcore standard", "standard"]:
+        if "hardcore" in ninja_league:
+            ninja_league = "challengehc"
+        else:
+            ninja_league = "challenge"
+
+    for unique_list in uniques:
+        if item.name in unique_list:
+            url_name = item.name.replace("'", "%27").replace(" ", "%20")
+            return f"https://poe.ninja/{ninja_league}/{prefix}?name={url_name}"
+
+    return f"https://poe.ninja/{ninja_league}/{prefix}/{url_name}"
+
+
+uniques = frozenset(
+    [unique_armours, unique_flasks, unique_jewels, unique_weapons, unique_accessories]
+)
 
 poeninja_category = {
     currency: "currency",

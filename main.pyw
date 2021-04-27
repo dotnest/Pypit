@@ -29,7 +29,7 @@ requests_cache = {}
 class Item:
     def __init__(self, item_info):
         """Parse raw clipboard data."""
-        if not item_info.startswith("Rarity: "):
+        if not item_info.startswith("Item Class: "):
             logging.info("invalid item data")
             self.name = None
             return None
@@ -42,6 +42,11 @@ class Item:
         item_info = item_info.split(split_on)
 
         self.item_info = item_info
+
+        # 3.14 hotfix
+        self.item_class = item_info[0].split(": ")[1]
+        del item_info[0]
+
         self.rarity = item_info[0].split()[1]
         self.name = item_info[1]
         self.notes = []
@@ -95,7 +100,7 @@ class Item:
             self.links = None
 
         # self.enchant for helm enchants
-        if self.links and self.links <= 4:
+        if self.item_class == "Helmets":
             for line in item_info:
                 if line.endswith(" (enchant)"):
                     self.enchant = line[: -len(" (enchant)")]
