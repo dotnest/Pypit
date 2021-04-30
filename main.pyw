@@ -178,6 +178,8 @@ def press_ctrl_c():
     """Press ctrl-c and add a delay for game to copy item info in clipboard buffer."""
     keyboard.press(Key.ctrl_l)
     keyboard.press(KeyCode(vk=67))
+    # linux fix
+    sleep(0.03)
     keyboard.release(Key.ctrl_l)
     keyboard.release(KeyCode(vk=67))
     sleep(0.03)
