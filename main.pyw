@@ -319,7 +319,7 @@ def pricecheck(item):
                 poeninja_links = 0
             else:
                 poeninja_links = item.links
-            if item_json["links"] != poeninja_links:
+            if "links" in item_json and item_json["links"] != poeninja_links:
                 item.notes.append(f"{item_json['links']}l - {item_json['chaosValue']}c")
                 continue
 
